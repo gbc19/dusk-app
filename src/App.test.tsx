@@ -1,0 +1,9 @@
+import {afterEach,expect,test} from 'vitest';
+import {cleanup,fireEvent,render,screen} from '@testing-library/react';
+import {App} from './main';
+import {filterDeals,mapsUrl,deals} from './data';
+afterEach(()=>{cleanup();localStorage.clear();});
+test('filters city, category, search, and saved spots together',()=>{expect(filterDeals('Atlantic City','$1 drinks','velvet',false,[]).map(d=>d.id)).toEqual([1]);expect(filterDeals('New York City','All spots','',false,[])).toHaveLength(2);expect(filterDeals('Atlantic City','All spots','',true,[2])).toEqual([deals[1]]);expect(filterDeals('Atlantic City','Beer','velvet',false,[])).toEqual([]);});
+test('saves a spot and shows it in saved view',()=>{render(<App/>);fireEvent.click(screen.getByLabelText('Save The Velvet Room'));fireEvent.click(screen.getByText('Saved spots'));expect(screen.getByText('The Velvet Room')).toBeInTheDocument();expect(screen.queryByText('Afterglow Social')).not.toBeInTheDocument();expect(JSON.parse(localStorage.getItem('dusk-saved')!)).toEqual([1]);});
+test('city switching and search update displayed venues',()=>{render(<App/>);fireEvent.change(screen.getByLabelText('Choose city'),{target:{value:'New York City'}});expect(screen.getByText('Juniper & Co.')).toBeInTheDocument();expect(screen.queryByText('The Velvet Room')).not.toBeInTheDocument();fireEvent.change(screen.getByLabelText('Search spots'),{target:{value:'no match'}});expect(screen.getByText('No spots here yet.')).toBeInTheDocument();});
+test('details clearly prohibit redemption and show neighborhood map',()=>{render(<App/>);fireEvent.click(screen.getByText('The Velvet Room'));expect(screen.getByRole('dialog')).toHaveTextContent('No offer can be purchased or redeemed');expect(screen.getByTitle('Google Maps of The Boardwalk')).toHaveAttribute('src',mapsUrl(deals[0]));fireEvent.click(screen.getByLabelText('Close venue details'));expect(screen.queryByRole('dialog')).not.toBeInTheDocument();});
