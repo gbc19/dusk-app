@@ -45,7 +45,9 @@ The runner uses `/usr/bin/chromium` when present, otherwise Playwright's install
 
 ## Branding and assets
 
-The palette uses charcoal/black, deep purple, warm orange, and restrained gradients. No original sun-and-crescent logo was found in the repository. `public/images/dusk-logo-placeholder.svg` is explicitly temporary, labeled **TEMP MARK** in the UI. Needed asset: the approved original DUSK sun-and-crescent SVG (preferably transparent, with a version suitable for dark backgrounds). Replace the placeholder and remove the temporary label when supplied; this drawing is not claimed as the original brand mark.
+The palette uses charcoal/black, deep purple, warm orange, and restrained gradients. Branding uses the supplied original files unchanged: `src/assets/Dusk Minor.png` (sun-and-crescent symbol) in the compact phone header, and `src/assets/logo.png` (full artwork) in the desktop header and larger footer placement. Images retain their intrinsic aspect ratios and original colors, with black-backed containers matching their source backgrounds. No cropping, filters, transparency tricks, redrawing, or recoloring are applied.
+
+`public/favicon.svg` centers the original symbol PNG, embedded byte-for-byte, on a black square. Regenerate it with `node scripts/generate-favicon.mjs` after replacing the symbol source; no image service or additional dependency is required. The temporary SVG and temporary branding labels have been removed.
 
 Venue and hero photography comes from Unsplash. Low Tide's unavailable image was replaced with a working bar image. All cards and the hero fall back to the bundled `public/images/venue-fallback.svg` on image failure. Google Fonts is optional: system font fallbacks remain available when offline.
 

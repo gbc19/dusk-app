@@ -25,6 +25,8 @@ import {
 import { VenueMap } from "./components/VenueMap";
 import { VenueImage } from "./components/VenueImage";
 import { useScreen, type Screen } from "./navigation/useScreen";
+import fullLogo from "./assets/logo.png";
+import symbolLogo from "./assets/Dusk Minor.png";
 import "./style.css";
 function readSaved(): number[] {
   try {
@@ -101,10 +103,19 @@ export function App() {
           }}
         >
           <img
-            src="/images/dusk-logo-placeholder.svg"
-            alt="Temporary DUSK sun-and-crescent logo"
+            className="brand-symbol"
+            src={symbolLogo}
+            alt="DUSK sun-and-crescent symbol"
+            width={432}
+            height={356}
           />
-          DUSK<span className="temp-label">TEMP MARK</span>
+          <img
+            className="brand-full"
+            src={fullLogo}
+            alt="DUSK"
+            width={533}
+            height={509}
+          />
         </a>
         <div className="city-select">
           <MapPin size={16} />
@@ -402,10 +413,19 @@ export function App() {
           }}
         >
           <img
-            src="/images/dusk-logo-placeholder.svg"
-            alt="Temporary DUSK sun-and-crescent logo"
+            className="brand-symbol"
+            src={symbolLogo}
+            alt="DUSK sun-and-crescent symbol"
+            width={432}
+            height={356}
           />
-          DUSK<span className="temp-label">TEMP MARK</span>
+          <img
+            className="brand-full"
+            src={fullLogo}
+            alt="DUSK"
+            width={533}
+            height={509}
+          />
         </a>
         <p>Good spots. Better nights.</p>
         <small>

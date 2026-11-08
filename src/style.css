@@ -895,16 +895,6 @@ footer > span {
   width: 43px;
   height: 43px;
 }
-.logo .temp-label {
-  position: absolute;
-  bottom: 0;
-  left: 54px;
-  font:
-    600 7px "DM Sans",
-    sans-serif;
-  letter-spacing: 1.2px;
-  color: #c5b5d4;
-}
 nav button {
   color: #b4a9c0;
 }
@@ -1128,9 +1118,6 @@ footer small,
 footer > span {
   color: #bca9cb;
 }
-footer .logo .temp-label {
-  font-size: 7px;
-}
 .empty p {
   color: #c5b3d1;
 }
@@ -1253,11 +1240,6 @@ input:focus-visible {
   .logo img {
     width: 31px;
     height: 36px;
-  }
-  .logo .temp-label {
-    left: 36px;
-    font-size: 5px;
-    white-space: nowrap;
   }
   header {
     gap: 12px;
@@ -1560,10 +1542,6 @@ footer {
   .header .logo img {
     width: 35px;
     height: 40px;
-  }
-  .header .logo .temp-label {
-    font-size: 6px;
-    left: 42px;
   }
   .header .city-select {
     margin-left: auto;
@@ -1977,5 +1955,67 @@ footer {
   .offer-tag {
     font-size: 10px;
     line-height: 1.2;
+  }
+}
+
+/* Supplied DUSK artwork is opaque black: retain its colors and full proportions. */
+.logo {
+  background: #000;
+  border: 1px solid #35283f;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 5px 8px;
+  font-size: 0;
+  letter-spacing: normal;
+  gap: 0;
+  line-height: 0;
+  width: fit-content;
+}
+.logo .brand-symbol {
+  display: none;
+}
+.logo .brand-full {
+  display: block;
+  width: 136px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  filter: none;
+  transform: none;
+}
+.header .logo {
+  height: 92px;
+  min-height: 92px;
+  padding: 3px 8px;
+}
+.header .logo .brand-full {
+  width: 82px;
+  height: auto;
+}
+footer .logo {
+  padding: 8px 12px;
+  font-size: 0;
+}
+footer .logo .brand-full {
+  width: 136px;
+  height: auto;
+}
+@media (max-width: 767px) {
+  .header .logo {
+    height: 58px;
+    min-height: 58px;
+    padding: 4px 8px;
+  }
+  .header .logo .brand-symbol {
+    display: block;
+    width: 58px;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    filter: none;
+    transform: none;
+  }
+  .header .logo .brand-full {
+    display: none;
   }
 }
