@@ -1958,7 +1958,7 @@ footer {
   }
 }
 
-/* Supplied DUSK artwork is opaque black: retain its colors and full proportions. */
+/* Keep black-backed full artwork on desktop and a transparent symbol on phones. */
 .logo {
   background: #000;
   border: 1px solid #35283f;
@@ -2004,7 +2004,12 @@ footer .logo .brand-full {
   .header .logo {
     height: 58px;
     min-height: 58px;
-    padding: 4px 8px;
+    padding: 4px 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
   }
   .header .logo .brand-symbol {
     display: block;

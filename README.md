@@ -45,9 +45,9 @@ The runner uses `/usr/bin/chromium` when present, otherwise Playwright's install
 
 ## Branding and assets
 
-The palette uses charcoal/black, deep purple, warm orange, and restrained gradients. Branding uses the supplied original files unchanged: `src/assets/Dusk Minor.png` (sun-and-crescent symbol) in the compact phone header, and `src/assets/logo.png` (full artwork) in the desktop header and larger footer placement. Images retain their intrinsic aspect ratios and original colors, with black-backed containers matching their source backgrounds. No cropping, filters, transparency tricks, redrawing, or recoloring are applied.
+The palette uses charcoal/black, deep purple, warm orange, and restrained gradients. Branding uses the supplied original files unchanged: `src/assets/dusk-logo-new.png` (transparent sun-and-crescent symbol) in the compact phone header, and `src/assets/logo.png` (full artwork) in the desktop header and larger footer placement. Images retain their intrinsic aspect ratios and original colors. The mobile symbol has a transparent, borderless container; the full desktop artwork keeps its matching black-backed placement. No cropping, filters, transparency tricks, redrawing, or recoloring are applied.
 
-`public/favicon.svg` centers the original symbol PNG, embedded byte-for-byte, on a black square. Regenerate it with `node scripts/generate-favicon.mjs` after replacing the symbol source; no image service or additional dependency is required. The temporary SVG and temporary branding labels have been removed.
+`public/favicon.svg` centers the new transparent symbol PNG, embedded byte-for-byte, on a transparent square without adding a background. Regenerate it with `node scripts/generate-favicon.mjs` after replacing the symbol source; no image service or additional dependency is required. The temporary SVG and temporary branding labels have been removed.
 
 Venue and hero photography comes from Unsplash. Low Tide's unavailable image was replaced with a working bar image. All cards and the hero fall back to the bundled `public/images/venue-fallback.svg` on image failure. Google Fonts is optional: system font fallbacks remain available when offline.
 

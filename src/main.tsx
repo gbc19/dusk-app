@@ -26,7 +26,7 @@ import { VenueMap } from "./components/VenueMap";
 import { VenueImage } from "./components/VenueImage";
 import { useScreen, type Screen } from "./navigation/useScreen";
 import fullLogo from "./assets/logo.png";
-import symbolLogo from "./assets/Dusk Minor.png";
+import symbolLogo from "./assets/dusk-logo-new.png";
 import "./style.css";
 function readSaved(): number[] {
   try {
@@ -106,8 +106,8 @@ export function App() {
             className="brand-symbol"
             src={symbolLogo}
             alt="DUSK sun-and-crescent symbol"
-            width={432}
-            height={356}
+            width={1382}
+            height={1138}
           />
           <img
             className="brand-full"
@@ -416,8 +416,8 @@ export function App() {
             className="brand-symbol"
             src={symbolLogo}
             alt="DUSK sun-and-crescent symbol"
-            width={432}
-            height={356}
+            width={1382}
+            height={1138}
           />
           <img
             className="brand-full"

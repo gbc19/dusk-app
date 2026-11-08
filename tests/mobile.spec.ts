@@ -51,6 +51,24 @@ for (const width of [320, 375, 390, 430]) {
     await expect(
       nav.getByRole("link", { name: "Discover", exact: true }),
     ).toHaveAttribute("aria-current", "page");
+    const symbol = page.locator(".header .brand-symbol");
+    await expect(symbol).toBeVisible();
+    await expect(page.locator(".header .brand-full")).toBeHidden();
+    await expect
+      .poll(() =>
+        symbol.evaluate((image) => (image as HTMLImageElement).naturalWidth),
+      )
+      .toBe(1382);
+    const symbolBox = (await symbol.boundingBox())!;
+    expect(symbolBox.width / symbolBox.height).toBeCloseTo(1382 / 1138, 2);
+    await expect(page.locator(".header .logo")).toHaveCSS(
+      "background-color",
+      "rgba(0, 0, 0, 0)",
+    );
+    await expect(page.locator(".header .logo")).toHaveCSS(
+      "border-top-width",
+      "0px",
+    );
     await expect(page.locator(".hero")).toBeHidden();
     await expect(page.locator(".mobile-intro")).toContainText("$1 Drinks.");
     await expect(page.getByLabel("Choose city")).toBeInViewport();
@@ -139,6 +157,8 @@ test("bottom safe-area clearance and desktop navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator(".hero")).toBeVisible();
+  await expect(page.locator(".header .brand-full")).toBeVisible();
+  await expect(page.locator(".header .brand-symbol")).toBeHidden();
   expect((await nav.boundingBox())!.y).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
     1280,
