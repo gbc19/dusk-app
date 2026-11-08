@@ -119,6 +119,18 @@ for (const width of [320, 375, 390, 430]) {
     const lastCard = await page.locator(".card").last().boundingBox();
     const bar = await nav.boundingBox();
     expect(lastCard!.y + lastCard!.height).toBeLessThanOrEqual(bar!.y);
+    await expect(page.locator("footer > p")).toHaveText(
+      "Don't Waste The Night.",
+    );
+    await expect(page.locator("footer > p")).toBeVisible();
+    await expect(page.locator("footer > span")).toHaveText(
+      "© 2015-2026 Dusk App LLC",
+    );
+    await expect(page.locator("footer > span")).toBeVisible();
+    expect(
+      (await page.locator("footer > span").boundingBox())!.y +
+        (await page.locator("footer > span").boundingBox())!.height,
+    ).toBeLessThanOrEqual((await nav.boundingBox())!.y);
     await assertLayout(page);
   });
 }
@@ -165,6 +177,12 @@ test("bottom safe-area clearance and desktop navigation", async ({ page }) => {
   await assertLayout(page);
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page.locator("footer > p")).toHaveText("Don't Waste The Night.");
+  await expect(page.locator("footer > p")).toBeVisible();
+  await expect(page.locator("footer > span")).toHaveText(
+    "© 2015-2026 Dusk App LLC",
+  );
+  await expect(page.locator("footer > span")).toBeVisible();
   await expect(page.locator(".hero")).toBeVisible();
   await expect(page.locator(".header .brand-wordmark")).toHaveText("DUSK");
   await expect(page.locator(".header .brand-symbol")).toBeVisible();

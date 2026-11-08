@@ -414,11 +414,11 @@ export function App() {
           />
           <span className="brand-wordmark">DUSK</span>
         </a>
-        <p>Good spots. Better nights.</p>
+        <p>Don't Waste The Night.</p>
         <small>
           21+ · Enjoy responsibly. Demo only; offers are not redeemable.
         </small>
-        <span>© {new Date().getFullYear()} DUSK</span>
+        <span>© 2015-2026 Dusk App LLC</span>
       </footer>
 
       {selected && (

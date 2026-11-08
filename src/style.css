@@ -1888,10 +1888,20 @@ footer {
     gap: 10px;
     display: block;
   }
-  footer > .logo,
+  footer > .logo {
+    display: none;
+  }
   footer > p,
   footer > span {
-    display: none;
+    display: block;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  footer > p {
+    margin: 0 0 8px;
+  }
+  footer > span {
+    margin-top: 8px;
   }
   footer small {
     display: block;
