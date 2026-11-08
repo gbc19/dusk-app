@@ -45,7 +45,7 @@ The runner uses `/usr/bin/chromium` when present, otherwise Playwright's install
 
 ## Branding and assets
 
-The palette uses charcoal/black, deep purple, warm orange, and restrained gradients. Branding uses the supplied original files unchanged: `src/assets/dusk-logo-new.png` (transparent sun-and-crescent symbol) in the compact phone header, and `src/assets/logo.png` (full artwork) in the desktop header and larger footer placement. Images retain their intrinsic aspect ratios and original colors. The mobile symbol has a transparent, borderless container; the full desktop artwork keeps its matching black-backed placement. No cropping, filters, transparency tricks, redrawing, or recoloring are applied.
+The palette uses charcoal/black, deep purple, warm orange, and restrained gradients. Branding pairs the unchanged `src/assets/dusk-logo-new.png` transparent sun-and-crescent symbol with a light-weight white DUSK wordmark in both phone and desktop headers, and in the larger desktop footer placement. The older black-background logo is no longer displayed. Images retain their intrinsic aspect ratios and original colors. The combined symbol and text use transparent, borderless containers across screen sizes. No cropping, filters, transparency tricks, redrawing, or recoloring are applied.
 
 `public/favicon.svg` centers the new transparent symbol PNG, embedded byte-for-byte, on a transparent square without adding a background. Regenerate it with `node scripts/generate-favicon.mjs` after replacing the symbol source; no image service or additional dependency is required. The temporary SVG and temporary branding labels have been removed.
 

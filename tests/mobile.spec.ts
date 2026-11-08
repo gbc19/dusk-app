@@ -53,7 +53,16 @@ for (const width of [320, 375, 390, 430]) {
     ).toHaveAttribute("aria-current", "page");
     const symbol = page.locator(".header .brand-symbol");
     await expect(symbol).toBeVisible();
-    await expect(page.locator(".header .brand-full")).toBeHidden();
+    await expect(page.locator(".header .brand-wordmark")).toHaveText("DUSK");
+    await expect(page.locator(".header .brand-wordmark")).toHaveCSS(
+      "color",
+      "rgb(255, 255, 255)",
+    );
+    const brandingBox = (await page.locator(".header .logo").boundingBox())!;
+    const cityBox = (await page.locator(".header .city-select").boundingBox())!;
+    expect(brandingBox.x + brandingBox.width + 8).toBeLessThanOrEqual(
+      cityBox.x,
+    );
     await expect
       .poll(() =>
         symbol.evaluate((image) => (image as HTMLImageElement).naturalWidth),
@@ -157,8 +166,9 @@ test("bottom safe-area clearance and desktop navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator(".hero")).toBeVisible();
-  await expect(page.locator(".header .brand-full")).toBeVisible();
-  await expect(page.locator(".header .brand-symbol")).toBeHidden();
+  await expect(page.locator(".header .brand-wordmark")).toHaveText("DUSK");
+  await expect(page.locator(".header .brand-symbol")).toBeVisible();
+  await expect(page.locator(".header .brand-full")).toHaveCount(0);
   expect((await nav.boundingBox())!.y).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
     1280,

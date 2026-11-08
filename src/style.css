@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap");
 :root {
   font-family: "DM Sans", sans-serif;
   color: #20231d;
@@ -1958,69 +1958,83 @@ footer {
   }
 }
 
-/* Keep black-backed full artwork on desktop and a transparent symbol on phones. */
-.logo {
-  background: #000;
-  border: 1px solid #35283f;
-  border-radius: 8px;
-  overflow: hidden;
-  padding: 5px 8px;
-  font-size: 0;
-  letter-spacing: normal;
-  gap: 0;
-  line-height: 0;
+/* Unified transparent symbol and light white wordmark, without image backplates. */
+.logo,
+.header .logo,
+footer .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   width: fit-content;
+  min-height: 58px;
+  height: auto;
+  padding: 4px 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  line-height: 1;
+  letter-spacing: normal;
+  font-size: 0;
+  flex-shrink: 0;
 }
-.logo .brand-symbol {
-  display: none;
-}
-.logo .brand-full {
+.logo .brand-symbol,
+.header .logo .brand-symbol {
   display: block;
-  width: 136px;
+  width: 62px;
   height: auto;
   max-width: 100%;
   object-fit: contain;
   filter: none;
   transform: none;
+  flex-shrink: 0;
 }
-.header .logo {
-  height: 92px;
-  min-height: 92px;
-  padding: 3px 8px;
+.logo .brand-wordmark,
+.header .logo .brand-wordmark {
+  color: #fff;
+  font-family: "Manrope", "Helvetica Neue", Arial, sans-serif;
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: 0.14em;
 }
-.header .logo .brand-full {
-  width: 82px;
+footer .logo .brand-symbol {
+  width: 70px;
   height: auto;
 }
-footer .logo {
-  padding: 8px 12px;
-  font-size: 0;
+footer .logo .brand-wordmark {
+  font-size: 40px;
 }
-footer .logo .brand-full {
-  width: 136px;
-  height: auto;
+@media (min-width: 768px) {
+  .app-navigation {
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
 @media (max-width: 767px) {
   .header .logo {
-    height: 58px;
-    min-height: 58px;
-    padding: 4px 0;
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    overflow: visible;
+    height: 50px;
+    min-height: 50px;
+    padding: 3px 0;
+    gap: 6px;
   }
   .header .logo .brand-symbol {
-    display: block;
-    width: 58px;
+    width: 40px;
     height: auto;
-    max-width: 100%;
-    object-fit: contain;
-    filter: none;
-    transform: none;
   }
-  .header .logo .brand-full {
+  .header .logo .brand-wordmark {
+    font-size: 23px;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+  }
+  .header .city-select select {
+    width: 128px;
+  }
+}
+
+@media (max-width: 767px) {
+  footer > .logo {
     display: none;
   }
 }

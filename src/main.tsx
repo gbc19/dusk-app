@@ -25,7 +25,6 @@ import {
 import { VenueMap } from "./components/VenueMap";
 import { VenueImage } from "./components/VenueImage";
 import { useScreen, type Screen } from "./navigation/useScreen";
-import fullLogo from "./assets/logo.png";
 import symbolLogo from "./assets/dusk-logo-new.png";
 import "./style.css";
 function readSaved(): number[] {
@@ -109,13 +108,7 @@ export function App() {
             width={1382}
             height={1138}
           />
-          <img
-            className="brand-full"
-            src={fullLogo}
-            alt="DUSK"
-            width={533}
-            height={509}
-          />
+          <span className="brand-wordmark">DUSK</span>
         </a>
         <div className="city-select">
           <MapPin size={16} />
@@ -419,13 +412,7 @@ export function App() {
             width={1382}
             height={1138}
           />
-          <img
-            className="brand-full"
-            src={fullLogo}
-            alt="DUSK"
-            width={533}
-            height={509}
-          />
+          <span className="brand-wordmark">DUSK</span>
         </a>
         <p>Good spots. Better nights.</p>
         <small>
