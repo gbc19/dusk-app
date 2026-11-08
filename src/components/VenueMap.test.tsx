@@ -69,7 +69,7 @@ afterEach(() => {
 });
 test("markers follow city, search, category and saved filters and open the offer preview", async () => {
   render(<App />);
-  fireEvent.click(screen.getByLabelText("Map view"));
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
   await waitFor(() => expect(active()).toHaveLength(4));
   const marker = active().find((marker) => marker.title.includes("Velvet"))!;
   expect(marker.position).toMatchObject({ lat: 39.3543, lng: -74.4335 });
@@ -100,18 +100,21 @@ test("markers follow city, search, category and saved filters and open the offer
     active().every((marker) => /Juniper|Night Shift/.test(marker.title)),
   ).toBe(true);
   fireEvent.click(screen.getByLabelText("Save Juniper & Co."));
-  fireEvent.click(screen.getByText("Saved spots"));
+  fireEvent.click(screen.getByRole("link", { name: "Saved" }));
+  expect(active()).toHaveLength(0);
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
+  fireEvent.click(screen.getByRole("button", { name: "Saved only" }));
   expect(active()).toHaveLength(1);
   expect(active()[0].title).toContain("Juniper");
   expect(maps).toHaveLength(1);
-  fireEvent.click(screen.getByLabelText("List view"));
-  fireEvent.click(screen.getByLabelText("Map view"));
+  fireEvent.click(screen.getByRole("link", { name: "Discover" }));
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
   expect(maps).toHaveLength(1);
 });
 test("a failed map leaves the filtered venue list usable", async () => {
   vi.mocked(loadGoogleMaps).mockRejectedValue(new Error("network failure"));
   render(<App />);
-  fireEvent.click(screen.getByLabelText("Map view"));
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
   expect(await screen.findByText(/Google Maps could not load/)).toBeVisible();
   expect(screen.getByText("The Velvet Room")).toBeVisible();
   fireEvent.change(screen.getByLabelText("Search spots"), {

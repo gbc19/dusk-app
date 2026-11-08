@@ -14,7 +14,6 @@ import {
   Moon,
   Sparkles,
   Map,
-  Grid2X2,
 } from "lucide-react";
 import {
   filterDeals,
@@ -25,6 +24,7 @@ import {
 } from "./data";
 import { VenueMap } from "./components/VenueMap";
 import { VenueImage } from "./components/VenueImage";
+import { useScreen, type Screen } from "./navigation/useScreen";
 import "./style.css";
 function readSaved(): number[] {
   try {
@@ -37,14 +37,20 @@ function readSaved(): number[] {
   }
 }
 export function App() {
+  const { screen, navigate } = useScreen();
   const [city, setCity] = useState<City>("Atlantic City"),
     [category, setCategory] = useState<Category>("All spots"),
     [query, setQuery] = useState(""),
     [saved, setSaved] = useState<number[]>(readSaved),
-    [savedOnly, setSavedOnly] = useState(false),
+    [mapSavedOnly, setMapSavedOnly] = useState(false),
     [selected, setSelected] = useState<Deal | null>(null),
-    [view, setView] = useState<"list" | "map">("list"),
-    [mapOpened, setMapOpened] = useState(false);
+    [mapOpened, setMapOpened] = useState(screen === "map");
+  const savedOnly = screen === "saved" || (screen === "map" && mapSavedOnly);
+  useEffect(() => {
+    if (screen === "map") setMapOpened(true);
+    setSelected(null);
+    window.scrollTo(0, 0);
+  }, [screen]);
   useEffect(() => {
     if (!selected) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -85,10 +91,11 @@ export function App() {
       <header className="header">
         <a
           className="logo"
-          href="#"
+          href="#discover"
           aria-label="Dusk home"
-          onClick={() => {
-            setSavedOnly(false);
+          onClick={(event) => {
+            event.preventDefault();
+            navigate("discover");
             setCategory("All spots");
             setQuery("");
           }}
@@ -99,20 +106,6 @@ export function App() {
           />
           DUSK<span className="temp-label">TEMP MARK</span>
         </a>
-        <nav aria-label="Main navigation">
-          <button
-            className={!savedOnly ? "nav-active" : ""}
-            onClick={() => setSavedOnly(false)}
-          >
-            Discover
-          </button>
-          <button
-            className={savedOnly ? "nav-active" : ""}
-            onClick={() => setSavedOnly(true)}
-          >
-            Saved spots <span className="count">{saved.length}</span>
-          </button>
-        </nav>
         <div className="city-select">
           <MapPin size={16} />
           <select
@@ -129,8 +122,47 @@ export function App() {
         </div>
         <span className="age">21+ ONLY</span>
       </header>
+      <nav className="app-navigation" aria-label="App navigation">
+        {(
+          [
+            ["discover", "Discover", Sparkles],
+            ["map", "Map", Map],
+            ["saved", "Saved", Bookmark],
+          ] as const
+        ).map(([destination, label, Icon]) => (
+          <a
+            key={destination}
+            href={`#${destination}`}
+            aria-label={label}
+            aria-current={screen === destination ? "page" : undefined}
+            onClick={(event) => {
+              if (
+                event.button === 0 &&
+                !event.metaKey &&
+                !event.ctrlKey &&
+                !event.shiftKey &&
+                !event.altKey
+              ) {
+                event.preventDefault();
+                navigate(destination as Screen);
+              }
+            }}
+          >
+            <Icon size={21} aria-hidden="true" />
+            <span>{label}</span>
+            {destination === "saved" && saved.length > 0 && (
+              <span
+                className="saved-count"
+                aria-label={`${saved.length} saved spots`}
+              >
+                {saved.length}
+              </span>
+            )}
+          </a>
+        ))}
+      </nav>
       <main>
-        <section className="hero">
+        <section className="hero" hidden={screen !== "discover"}>
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="dot" /> GOOD NIGHTS START WITH A GOOD FIND
@@ -147,7 +179,7 @@ export function App() {
               <br />
               Fictional offers. Non-redeemable previews.
             </p>
-            <a className="primary" href="#discover">
+            <a className="primary" href="#deals">
               $1 Drinks & more <ArrowUpRight size={20} />
             </a>
             <div className="hero-foot">
@@ -180,20 +212,34 @@ export function App() {
             </div>
           </div>
         </section>
+        {screen === "discover" && (
+          <section className="mobile-intro" aria-label="DUSK deals">
+            <span className="eyebrow">YOUR CITY. AFTER DARK.</span>
+            <h1>
+              <em>$1 Drinks.</em> Better nights.
+            </h1>
+          </section>
+        )}
         <div className="launch-note">
-          <span className="pill">THE PREVIEW EDITION</span>
           <p>
-            Exploring {city}. Fictional venues & non-redeemable offers. Launch
-            pending local regulatory approval.
+            21+ · Fictional, non-redeemable previews. Launch pending local
+            regulatory approval.
           </p>
-          <span className="note-star">✳</span>
         </div>
-        <section id="discover" className="discover">
+        <section
+          id="deals"
+          className={`discover screen-${screen}`}
+          aria-label={`${screen === "map" ? "Map" : screen === "saved" ? "Saved" : "Discover"} deals`}
+        >
           <div className="section-heading">
             <div className="eyebrow">A SPOT FOR EVERY KIND OF NIGHT</div>
             <div className="heading-row">
               <h2>
-                {savedOnly ? "Your saved spots." : "Find your kind of night."}
+                {screen === "saved"
+                  ? "Saved spots"
+                  : screen === "map"
+                    ? "Map your night."
+                    : "Find your kind of night."}
               </h2>
               <span className="city-caption">
                 <MapPin size={15} /> {city} <span> / </span> Launch preview
@@ -210,6 +256,7 @@ export function App() {
                 <button
                   key={label}
                   className={category === label ? "selected" : ""}
+                  aria-pressed={category === label}
                   onClick={() => setCategory(label)}
                 >
                   <Icon size={16} />
@@ -232,32 +279,21 @@ export function App() {
               {visible.length} {visible.length === 1 ? "spot" : "spots"} to
               discover <span className="muted">· Demo offers</span>
             </span>
-            <div className="view-toggle" aria-label="View mode">
+            {screen === "map" && (
               <button
-                aria-label="List view"
-                aria-pressed={view === "list"}
-                onClick={() => setView("list")}
+                className="map-saved-filter"
+                aria-pressed={mapSavedOnly}
+                onClick={() => setMapSavedOnly((value) => !value)}
               >
-                <Grid2X2 size={15} />
-                List
+                <Bookmark size={16} aria-hidden="true" />
+                Saved only
               </button>
-              <button
-                aria-label="Map view"
-                aria-pressed={view === "map"}
-                onClick={() => {
-                  setMapOpened(true);
-                  setView("map");
-                }}
-              >
-                <Map size={15} />
-                Map
-              </button>
-            </div>
+            )}
           </div>
           {mapOpened && (
-            <div hidden={view !== "map"}>
+            <div hidden={screen !== "map"}>
               <VenueMap
-                active={view === "map"}
+                active={screen === "map"}
                 city={city}
                 deals={visible}
                 onSelect={setSelected}
@@ -330,10 +366,16 @@ export function App() {
           {visible.length === 0 && (
             <div className="empty">
               <SlidersHorizontal />
-              <h3>No spots here yet.</h3>
+              <h3>
+                {screen === "saved" && saved.length === 0
+                  ? "No saved spots yet."
+                  : "No spots here yet."}
+              </h3>
               <p>
                 {savedOnly
-                  ? "Save a spot using its bookmark button, or explore another city."
+                  ? saved.length === 0
+                    ? "Tap the bookmark on any deal to keep it here for your next night out."
+                    : "Your saved spots may be in another city or hidden by the current filters."
                   : "Try another category or a different search."}
               </p>
               <button
@@ -341,33 +383,24 @@ export function App() {
                 onClick={() => {
                   setQuery("");
                   setCategory("All spots");
-                  setSavedOnly(false);
+                  navigate("discover");
                 }}
               >
-                Explore all spots <ArrowRight size={16} />
+                Back to Discover <ArrowRight size={16} />
               </button>
             </div>
           )}
         </section>
-        <section className="bottom-banner">
-          <div>
-            <div className="eyebrow">THE NIGHT IS YOURS</div>
-            <h2>
-              Go somewhere new.
-              <br />
-              Make it a good story.
-            </h2>
-          </div>
-          <span>✳</span>
-          <p>
-            A better way to discover
-            <br />
-            what’s happening after dark.
-          </p>
-        </section>
       </main>
       <footer>
-        <a className="logo" href="#">
+        <a
+          className="logo"
+          href="#discover"
+          onClick={(event) => {
+            event.preventDefault();
+            navigate("discover");
+          }}
+        >
           <img
             src="/images/dusk-logo-placeholder.svg"
             alt="Temporary DUSK sun-and-crescent logo"
@@ -380,6 +413,7 @@ export function App() {
         </small>
         <span>© {new Date().getFullYear()} DUSK</span>
       </footer>
+
       {selected && (
         <div className="modal-backdrop" onClick={() => setSelected(null)}>
           <section

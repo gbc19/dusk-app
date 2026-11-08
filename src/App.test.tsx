@@ -25,7 +25,7 @@ test("filters city, category, search, and saved spots together", () => {
 test("saves a spot and shows it in saved view", () => {
   render(<App />);
   fireEvent.click(screen.getByLabelText("Save The Velvet Room"));
-  fireEvent.click(screen.getByText("Saved spots"));
+  fireEvent.click(screen.getByRole("link", { name: "Saved" }));
   expect(screen.getByText("The Velvet Room")).toBeInTheDocument();
   expect(screen.queryByText("Ember & Violet")).not.toBeInTheDocument();
   expect(JSON.parse(localStorage.getItem("dusk-saved")!)).toEqual([1]);
@@ -57,7 +57,7 @@ test("details prohibit redemption and label directions as demo coordinates", () 
 
 test("missing map key keeps a visible venue list and sends no map request", () => {
   render(<App />);
-  fireEvent.click(screen.getByLabelText("Map view"));
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
   expect(screen.getByText(/no Google Maps key is configured/)).toBeVisible();
   expect(screen.getByText("The Velvet Room")).toBeVisible();
   expect(
@@ -91,4 +91,47 @@ test("detail dialog traps keyboard focus and returns it on Escape", () => {
   fireEvent.keyDown(dialog, { key: "Escape" });
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(trigger).toHaveFocus();
+});
+
+test("app navigation shares filters and city while Saved keeps existing local deals", () => {
+  localStorage.setItem("dusk-saved", JSON.stringify([5]));
+  render(<App />);
+  const nav = screen.getByRole("navigation", { name: "App navigation" });
+  expect(nav.querySelectorAll("a")).toHaveLength(3);
+  fireEvent.change(screen.getByLabelText("Choose city"), {
+    target: { value: "New York City" },
+  });
+  fireEvent.change(screen.getByLabelText("Search spots"), {
+    target: { value: "Juniper" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Cocktails" }));
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
+  expect(window.location.hash).toBe("#map");
+  expect(screen.getByRole("link", { name: "Map" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  expect(screen.getByLabelText("Choose city")).toHaveValue("New York City");
+  expect(screen.getByLabelText("Search spots")).toHaveValue("Juniper");
+  expect(screen.getByRole("button", { name: "Cocktails" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  fireEvent.click(screen.getByRole("link", { name: "Saved" }));
+  expect(
+    screen.getByRole("heading", { name: "Saved spots" }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Juniper & Co.")).toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText("Unsave Juniper & Co."));
+  expect(screen.getByText("No saved spots yet.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Back to Discover" }));
+  expect(screen.getByRole("link", { name: "Discover" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  expect(screen.getByLabelText("Search spots")).toHaveValue("");
+  expect(screen.getByRole("button", { name: "All spots" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });

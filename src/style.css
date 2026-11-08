@@ -1210,8 +1210,8 @@ input:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
-  height: 42px;
+  min-width: 44px;
+  height: 44px;
   background: #faad76;
   color: #28122b;
   border: 2px solid #361e43;
@@ -1327,5 +1327,655 @@ input:focus-visible {
   }
   .hero h1 {
     font-size: 46px;
+  }
+}
+
+/* App destinations share a single set of city, search, and category filters. */
+[hidden] {
+  display: none !important;
+}
+html {
+  scroll-padding-top: 90px;
+}
+.app-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  min-width: 0;
+}
+.app-navigation a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  min-width: 88px;
+  min-height: 48px;
+  padding: 12px;
+  font-size: 14px;
+  color: #cabbda;
+  border-radius: 7px;
+}
+.app-navigation a[aria-current="page"] {
+  color: #ffb682;
+  background: #35223f;
+}
+.app-navigation a:hover {
+  background: #30213b;
+}
+.saved-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  border-radius: 12px;
+  background: #f2a16c;
+  color: #25152b;
+  font-size: 11px;
+  font-weight: 700;
+}
+.mobile-intro {
+  display: none;
+}
+.header .logo {
+  flex-shrink: 0;
+  min-height: 48px;
+}
+.header .city-select {
+  min-width: 0;
+}
+.city-select select {
+  min-height: 44px;
+}
+.search input {
+  min-height: 44px;
+}
+.categories button,
+.save,
+.close,
+.card-title,
+.card-bottom button,
+.primary,
+.directions-link,
+.geolocation button,
+.map-saved-filter {
+  min-height: 44px;
+  min-width: 44px;
+}
+.categories button {
+  font-size: 13px;
+}
+.save {
+  width: 44px;
+  height: 44px;
+}
+.card-title {
+  gap: 10px;
+  line-height: 1.3;
+}
+.card-title svg {
+  flex-shrink: 0;
+}
+.card-bottom button {
+  font-size: 12px;
+}
+.close {
+  display: grid;
+  place-items: center;
+  right: 8px;
+  top: 8px;
+}
+.directions-link {
+  width: fit-content;
+  line-height: 1.5;
+}
+.map-saved-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #735584;
+  background: #24192e;
+  color: #ecdff5;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.map-saved-filter[aria-pressed="true"] {
+  border-color: #f2a16c;
+  background: #472b3d;
+  color: #ffd1b0;
+}
+.hero {
+  min-height: 350px;
+}
+.hero-photo {
+  min-height: 350px;
+}
+.hero-copy {
+  padding-top: 30px;
+  padding-bottom: 28px;
+}
+.hero h1 {
+  font-size: 48px;
+  margin: 18px 0;
+}
+.hero-copy p {
+  margin: 14px 0 20px;
+}
+.hero-foot {
+  margin-top: 18px;
+}
+.launch-note {
+  padding: 14px 0;
+}
+.launch-note p {
+  font-size: 12px;
+  color: #d6c6e0;
+}
+.discover {
+  margin-top: 28px;
+}
+.screen-map,
+.screen-saved {
+  margin-top: 15px;
+}
+.results-row {
+  min-height: 44px;
+  font-size: 12px;
+  gap: 12px;
+}
+.map-panel {
+  margin-top: 0;
+}
+.map-canvas {
+  height: 430px;
+}
+footer {
+  padding-bottom: 24px;
+}
+@media (max-width: 900px) {
+  .header {
+    gap: 14px;
+  }
+  .app-navigation a {
+    min-width: 72px;
+    font-size: 12px;
+    gap: 5px;
+    padding: 10px;
+  }
+  .header .age {
+    display: none;
+  }
+  .header .city-select select {
+    font-size: 12px;
+  }
+  .header .logo {
+    font-size: 24px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --bottom-nav-height: 68px;
+    --bottom-safe-area: env(safe-area-inset-bottom, 0px);
+  }
+  html {
+    scroll-padding-top: 85px;
+    scroll-padding-bottom: calc(
+      var(--bottom-nav-height) + var(--bottom-safe-area) + 16px
+    );
+  }
+  body {
+    padding-bottom: calc(
+      var(--bottom-nav-height) + var(--bottom-safe-area) + 20px
+    );
+  }
+  main,
+  footer {
+    margin-left: 16px;
+    margin-right: 16px;
+    min-width: 0;
+  }
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    height: 74px;
+    min-height: 74px;
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 8px 16px;
+    background: #111014f5;
+    border-bottom: 1px solid #3b2c46;
+    backdrop-filter: blur(16px);
+  }
+  .header .logo {
+    font-size: 24px;
+    gap: 7px;
+    letter-spacing: 1px;
+    min-height: 50px;
+    padding-bottom: 8px;
+  }
+  .header .logo img {
+    width: 35px;
+    height: 40px;
+  }
+  .header .logo .temp-label {
+    font-size: 6px;
+    left: 42px;
+  }
+  .header .city-select {
+    margin-left: auto;
+    gap: 5px;
+  }
+  .header .city-select svg {
+    width: 16px;
+    flex-shrink: 0;
+  }
+  .header .city-select select {
+    font-size: 13px;
+    width: 134px;
+    max-width: 100%;
+    padding: 0 0 0 2px;
+    min-height: 44px;
+  }
+  .header .age {
+    display: none;
+  }
+  .app-navigation {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    height: calc(var(--bottom-nav-height) + var(--bottom-safe-area));
+    padding: 7px max(12px, env(safe-area-inset-right, 0px))
+      calc(7px + var(--bottom-safe-area))
+      max(12px, env(safe-area-inset-left, 0px));
+    border-top: 1px solid #594067;
+    background: #19121ff7;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 -8px 24px #08050b55;
+  }
+  .app-navigation a {
+    min-width: 44px;
+    min-height: 52px;
+    font-size: 12px;
+    line-height: 1.2;
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 8px;
+    border-radius: 9px;
+  }
+  .app-navigation a[aria-current="page"] {
+    background: #3c284a;
+    color: #ffb682;
+  }
+  .app-navigation a[aria-current="page"]:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 24px;
+    height: 2px;
+    background: #ffb682;
+    border-radius: 2px;
+  }
+  .app-navigation .saved-count {
+    position: absolute;
+    top: 3px;
+    left: calc(50% + 10px);
+    font-size: 10px;
+    min-width: 17px;
+    height: 17px;
+  }
+  .hero {
+    display: none;
+  }
+  .mobile-intro {
+    display: block;
+    padding: 20px 0 3px;
+  }
+  .mobile-intro .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: #c8acd9;
+  }
+  .mobile-intro h1 {
+    font:
+      600 clamp(22px, 6vw, 28px)/1.25 "Manrope",
+      sans-serif;
+    letter-spacing: -1px;
+    margin: 8px 0 4px;
+  }
+  .mobile-intro h1 em {
+    color: #ffb17c;
+    font: inherit;
+    letter-spacing: inherit;
+  }
+  .launch-note {
+    padding: 7px 0 12px;
+    display: block;
+  }
+  .launch-note p {
+    font-size: 11px;
+    line-height: 1.6;
+    margin: 0;
+    color: #d2c1de;
+  }
+  .discover,
+  .screen-map,
+  .screen-saved {
+    margin-top: 16px;
+    margin-bottom: 24px;
+    scroll-margin-top: 90px;
+  }
+  .section-heading > .eyebrow {
+    display: none;
+  }
+  .heading-row {
+    margin: 0 0 13px;
+  }
+  .heading-row h2 {
+    font-size: 22px;
+    line-height: 1.3;
+    letter-spacing: -0.6px;
+  }
+  .city-caption {
+    display: none;
+  }
+  .tools {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 10px;
+    min-width: 0;
+  }
+  .search {
+    order: -1;
+    width: 100%;
+    min-width: 0;
+    height: 46px;
+    border-color: #705181;
+    padding: 0 12px;
+  }
+  .search svg {
+    flex-shrink: 0;
+  }
+  .search input {
+    width: 100%;
+    min-width: 0;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  .categories {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    min-width: 0;
+  }
+  .categories button {
+    font-size: 12px;
+    padding: 8px 5px;
+    gap: 5px;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .categories button svg {
+    width: 14px;
+    flex-shrink: 0;
+  }
+  .results-row {
+    margin: 8px 0 12px;
+    min-height: 30px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .results-row .muted {
+    font-size: 11px;
+    margin-left: 2px;
+  }
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+  }
+  .card {
+    display: grid;
+    grid-template-columns: 100px minmax(0, 1fr);
+    position: relative;
+    min-height: 176px;
+    border-radius: 10px;
+    min-width: 0;
+  }
+  .card-image {
+    height: auto;
+    min-height: 176px;
+    position: static;
+    overflow: visible;
+  }
+  .card-image > img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 9px 0 0 9px;
+  }
+  .card:hover .card-image > img {
+    transform: none;
+  }
+  .demo-badge {
+    top: auto;
+    bottom: 9px;
+    left: 110px;
+    font-size: 7px;
+    padding: 3px 4px;
+    letter-spacing: 0.45px;
+    max-width: calc(100% - 118px);
+    white-space: nowrap;
+    background: #251b30;
+    color: #f9cbaa;
+  }
+  .save {
+    right: 6px;
+    top: 6px;
+    z-index: 1;
+    background: #21172ce8;
+    border-color: #76558b;
+  }
+  .offer-tag {
+    left: 5px;
+    bottom: 10px;
+    max-width: 90px;
+    min-height: 28px;
+    padding: 6px;
+    font-size: 8px;
+    letter-spacing: 0;
+    gap: 4px;
+    flex-wrap: wrap;
+    line-height: 1.2;
+  }
+  .dollar {
+    font-size: 21px;
+  }
+  .card-body {
+    padding: 10px 9px 32px 11px;
+    min-width: 0;
+  }
+  .card-kicker {
+    display: none;
+  }
+  .card-title {
+    font-size: 16px;
+    letter-spacing: -0.35px;
+    margin: 0;
+    padding: 0 38px 0 0;
+    min-height: 44px;
+    align-items: center;
+  }
+  .card-title svg {
+    display: none;
+  }
+  .location {
+    font-size: 11px;
+    line-height: 1.5;
+    align-items: flex-start;
+    gap: 4px;
+    overflow-wrap: anywhere;
+  }
+  .location svg {
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .card-bottom {
+    margin-top: 7px;
+    padding: 0;
+    border: 0;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: wrap;
+    font-size: 11px;
+  }
+  .card-bottom span {
+    font-size: 11px;
+    gap: 3px;
+  }
+  .card-bottom button {
+    padding: 0 5px;
+    font-size: 12px;
+    margin-left: auto;
+    min-height: 44px;
+  }
+  .card-bottom svg {
+    width: 12px;
+  }
+  .map-panel {
+    padding: 12px;
+  }
+  .map-info strong {
+    font-size: 17px;
+  }
+  .map-panel p {
+    font-size: 12px;
+  }
+  .map-canvas {
+    height: clamp(260px, 45svh, 410px);
+  }
+  .map-info p {
+    line-height: 1.5;
+    margin: 8px 0 12px;
+  }
+  .geolocation {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .geolocation button {
+    font-size: 13px;
+  }
+  .geolocation p {
+    font-size: 11px;
+  }
+  .map-saved-filter {
+    font-size: 12px;
+    min-height: 44px;
+    padding: 8px;
+  }
+  .empty {
+    padding: 35px 12px;
+  }
+  .empty h3 {
+    font-size: 22px;
+  }
+  .empty p {
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 320px;
+    margin: 14px auto 20px;
+  }
+  .empty .primary {
+    min-height: 48px;
+  }
+  footer {
+    padding: 18px 0 12px;
+    margin-top: 0;
+    gap: 10px;
+    display: block;
+  }
+  footer > .logo,
+  footer > p,
+  footer > span {
+    display: none;
+  }
+  footer small {
+    display: block;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #cbb7d8;
+  }
+  .modal-backdrop {
+    z-index: 10;
+    padding: 12px;
+  }
+  .modal {
+    max-height: calc(100svh - 24px);
+    padding: 35px 21px 24px;
+  }
+  .modal h2 {
+    font-size: 25px;
+    overflow-wrap: anywhere;
+  }
+  .modal .eyebrow {
+    font-size: 9px;
+    line-height: 1.7;
+  }
+  .directions-link {
+    font-size: 14px;
+  }
+  .primary {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-navigation {
+    position: absolute;
+    top: 0;
+    left: 25%;
+    height: 100px;
+  }
+}
+
+/* Keep preview labels readable in compact cards and clear the top notch. */
+@media (max-width: 767px) {
+  :root {
+    --top-safe-area: env(safe-area-inset-top, 0px);
+  }
+  html {
+    scroll-padding-top: calc(85px + var(--top-safe-area));
+  }
+  .header {
+    height: calc(74px + var(--top-safe-area));
+    min-height: calc(74px + var(--top-safe-area));
+    padding-top: calc(8px + var(--top-safe-area));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .demo-badge {
+    font-size: 9px;
+    letter-spacing: 0.2px;
+    line-height: 1.3;
+  }
+  .offer-tag {
+    font-size: 10px;
+    line-height: 1.2;
   }
 }
