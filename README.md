@@ -22,3 +22,7 @@ All venues, hours, and promotions are fictional demo content. No purchase, booki
 Google Maps uses public embeds without an API key. Maps show city or neighborhood areas, not fictional venue pins. A production venue map will need verified addresses, coordinates, and an appropriately restricted Google Maps Platform key if migrating to the JavaScript API. Third-party maps, Unsplash photos, and Google Fonts require internet access.
 
 Saved spots stay in browser local storage, with a session-only fallback when storage is unavailable. There is no backend or user account system. Real inventory, approval status, age verification, and redemption require a later backend integration.
+
+## Data model foundation
+
+[Data model design](docs/data-model.md) documents venue, customer, and staff contracts and future relationship boundaries. Offers reference shared venue IDs; existing saved-deal IDs remain compatible. Customer and staff types are not instantiated or persisted. Promoter profiles, nightlife events, guest lists, and table reservations remain fixed off with no MVP UI, backend, or added services.
