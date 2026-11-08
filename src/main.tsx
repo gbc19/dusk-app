@@ -1,24 +1,468 @@
-import React, {useEffect,useState} from 'react';
-import {createRoot} from 'react-dom/client';
-import {ArrowUpRight, ArrowRight, Bookmark, MapPin, Search, SlidersHorizontal, X, Clock, Wine, Beer, Moon, Sparkles, Map, Grid2X2} from 'lucide-react';
-import {filterDeals,mapsUrl,type City,type Category,type Deal} from './data';
-import './style.css';
-function readSaved():number[]{try{const value=JSON.parse(localStorage.getItem('dusk-saved')||'[]');return Array.isArray(value)?value.filter((v:unknown):v is number=>typeof v==='number'):[];}catch{return [];}}
-export function App(){
-const [city,setCity]=useState<City>('Atlantic City'),[category,setCategory]=useState<Category>('All spots'),[query,setQuery]=useState(''),[saved,setSaved]=useState<number[]>(readSaved),[savedOnly,setSavedOnly]=useState(false),[selected,setSelected]=useState<Deal|null>(null),[view,setView]=useState<'list'|'map'>('list');
-useEffect(()=>{if(!selected)return;const previous=document.activeElement as HTMLElement|null;const overflow=document.body.style.overflow;document.body.style.overflow='hidden';document.querySelector<HTMLElement>('[role=dialog]')?.focus();return ()=>{document.body.style.overflow=overflow;previous?.focus();};},[selected?.id]);
-const visible=filterDeals(city,category,query,savedOnly,saved);
-function toggleSaved(id:number){setSaved(old=>{const next=old.includes(id)?old.filter(x=>x!==id):[...old,id];try{localStorage.setItem('dusk-saved',JSON.stringify(next));}catch{/* Saving remains available for this session. */}return next;});}
-const categories: [Category,typeof Sparkles][]=[['All spots',Sparkles],['$1 drinks',Wine],['Cocktails',Wine],['Beer',Beer],['Late night',Moon]];
-return <><header className="header"><a className="logo" href="#" aria-label="Dusk home" onClick={()=>{setSavedOnly(false);setCategory('All spots');setQuery('');}}>dusk<span>✳</span></a><nav aria-label="Main navigation"><button className={!savedOnly?'nav-active':''} onClick={()=>setSavedOnly(false)}>Discover</button><button className={savedOnly?'nav-active':''} onClick={()=>setSavedOnly(true)}>Saved spots <span className="count">{saved.length}</span></button></nav><div className="city-select"><MapPin size={16}/><select aria-label="Choose city" value={city} onChange={e=>{setCity(e.target.value as City);setSelected(null);}}><option>Atlantic City</option><option>New York City</option></select></div><span className="age">21+ ONLY</span></header>
-<main><section className="hero"><div className="hero-copy"><div className="eyebrow"><span className="dot"/> GOOD NIGHTS START WITH A GOOD FIND</div><h1>Less spending.<br/>More <em>living.</em></h1><p>The best spots. The better deals.<br/>Find a night worth going out for.</p><a className="primary" href="#discover">Find your next spot <ArrowUpRight size={20}/></a><div className="hero-foot"><span className="mini-star">✳</span> Made for the nights you didn’t plan.</div></div><div className="hero-photo"><img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1400&q=85" alt="Warmly lit bar with glasses hanging above the counter"/><div className="photo-shade"/><span className="photo-label">OUT OF OFFICE. INTO THE NIGHT.</span><div className="hero-photo-bottom"><div><span>YOUR CITY, AFTER DARK</span><strong>A little less ordinary.</strong></div><span className="round-arrow"><ArrowUpRight/></span></div><div className="sticker">GOOD<br/>NIGHTS<br/><span>AHEAD ↗</span></div></div></section>
-<div className="launch-note"><span className="pill">THE PREVIEW EDITION</span><p>Exploring {city}. Sample venues & offers — launch subject to local regulatory approval.</p><span className="note-star">✳</span></div>
-<section id="discover" className="discover"><div className="section-heading"><div className="eyebrow">A SPOT FOR EVERY KIND OF NIGHT</div><div className="heading-row"><h2>{savedOnly?'Your saved spots.':'Find your kind of night.'}</h2><span className="city-caption"><MapPin size={15}/> {city} <span> / </span> Launch preview</span></div></div><div className="tools"><div className="categories" role="group" aria-label="Filter by category">{categories.map(([label,Icon])=><button key={label} className={category===label?'selected':''} onClick={()=>setCategory(label)}><Icon size={16}/>{label}</button>)}</div><label className="search"><Search size={17}/><input aria-label="Search spots" placeholder="Search spots or neighborhoods" value={query} onChange={e=>setQuery(e.target.value)}/></label></div><div className="results-row"><span>{visible.length} {visible.length===1?'spot':'spots'} to discover <span className="muted">· Demo offers</span></span><div className="view-toggle" aria-label="View mode"><button aria-label="List view" aria-pressed={view==='list'} onClick={()=>setView('list')}><Grid2X2 size={15}/>List</button><button aria-label="Map view" aria-pressed={view==='map'} onClick={()=>setView('map')}><Map size={15}/>Map</button></div></div>
-{view==='map'&&<div className="map-panel"><iframe title={`Google Maps of ${city}`} src={`https://www.google.com/maps?q=${encodeURIComponent(city)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade"/><p>Explore the city on Google Maps. All venue names below are fictional demo data; map shows the city only.</p></div>}
-<div className="cards">{visible.map(deal=><article className="card" key={deal.id}><div className="card-image"><img src={`https://images.unsplash.com/${deal.image}?auto=format&fit=crop&w=700&q=80`} alt={deal.category==='Beer'?'A drink served at a bar':'A warmly lit nightlife setting'} loading="lazy"/><span className="demo-badge">PREVIEW</span><button className={`save ${saved.includes(deal.id)?'is-saved':''}`} aria-label={`${saved.includes(deal.id)?'Unsave':'Save'} ${deal.name}`} aria-pressed={saved.includes(deal.id)} onClick={()=>toggleSaved(deal.id)}><Bookmark size={18} fill={saved.includes(deal.id)?'currentColor':'none'}/></button><span className="offer-tag">{deal.category==='$1 drinks'?<><span className="dollar">$1</span> HOUSE DRINKS</>:deal.category.toUpperCase()}</span></div><div className="card-body"><div className="card-kicker">{deal.tag}</div><button className="card-title" onClick={()=>setSelected(deal)}>{deal.name}<ArrowUpRight size={21}/></button><div className="location"><MapPin size={13}/>{deal.neighborhood} · {deal.city}</div><div className="card-bottom"><span><Clock size={14}/>{deal.time}</span><button onClick={()=>setSelected(deal)}>View spot <ArrowRight size={15}/></button></div></div></article>)}</div>
-{visible.length===0&&<div className="empty"><SlidersHorizontal/><h3>No spots here yet.</h3><p>{savedOnly?'Save a spot using its bookmark button, or explore another city.':'Try another category or a different search.'}</p><button className="primary" onClick={()=>{setQuery('');setCategory('All spots');setSavedOnly(false);}}>Explore all spots <ArrowRight size={16}/></button></div>}
-</section><section className="bottom-banner"><div><div className="eyebrow">THE NIGHT IS YOURS</div><h2>Go somewhere new.<br/>Make it a good story.</h2></div><span>✳</span><p>A better way to discover<br/>what’s happening after dark.</p></section></main><footer><a className="logo" href="#">dusk<span>✳</span></a><p>Good spots. Better nights.</p><small>21+ · Enjoy responsibly. Demo only; offers are not redeemable.</small><span>© {new Date().getFullYear()} DUSK</span></footer>
-{selected&&<div className="modal-backdrop" onClick={()=>setSelected(null)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="venue-title" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==='Escape')setSelected(null);if(e.key==='Tab'){const items=Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button, iframe, a[href], input, select'));const first=items[0],last=items[items.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===e.currentTarget)){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}}} tabIndex={-1}><button className="close" aria-label="Close venue details" onClick={()=>setSelected(null)}><X/></button><div className="eyebrow">FICTIONAL VENUE · LAUNCH PREVIEW</div><h2 id="venue-title">{selected.name}</h2><p>{selected.description}</p><h3>{selected.offer}</h3><p><Clock size={15}/> Sample hours: {selected.time}</p><div className="detail-warning">Demo only. No offer can be purchased or redeemed. Any launch and promotion require local regulatory approval and venue confirmation. For adults 21+.</div><iframe title={`Google Maps of ${selected.neighborhood}`} src={mapsUrl(selected)} loading="lazy"/><small>Map shows the neighborhood, not an actual venue location.</small><button className="primary" onClick={()=>toggleSaved(selected.id)}>{saved.includes(selected.id)?'Remove from saved':'Save this spot'}<Bookmark size={16}/></button></section></div>}
-</>}
-const root=document.getElementById('root');
-if(root) createRoot(root).render(<React.StrictMode><App/></React.StrictMode>);
+import React, { useEffect, useMemo, useState } from "react";
+import { createRoot } from "react-dom/client";
+import {
+  ArrowUpRight,
+  ArrowRight,
+  Bookmark,
+  MapPin,
+  Search,
+  SlidersHorizontal,
+  X,
+  Clock,
+  Wine,
+  Beer,
+  Moon,
+  Sparkles,
+  Map,
+  Grid2X2,
+} from "lucide-react";
+import {
+  filterDeals,
+  directionsUrl,
+  type City,
+  type Category,
+  type Deal,
+} from "./data";
+import { VenueMap } from "./components/VenueMap";
+import { VenueImage } from "./components/VenueImage";
+import "./style.css";
+function readSaved(): number[] {
+  try {
+    const value = JSON.parse(localStorage.getItem("dusk-saved") || "[]");
+    return Array.isArray(value)
+      ? value.filter((v: unknown): v is number => typeof v === "number")
+      : [];
+  } catch {
+    return [];
+  }
+}
+export function App() {
+  const [city, setCity] = useState<City>("Atlantic City"),
+    [category, setCategory] = useState<Category>("All spots"),
+    [query, setQuery] = useState(""),
+    [saved, setSaved] = useState<number[]>(readSaved),
+    [savedOnly, setSavedOnly] = useState(false),
+    [selected, setSelected] = useState<Deal | null>(null),
+    [view, setView] = useState<"list" | "map">("list"),
+    [mapOpened, setMapOpened] = useState(false);
+  useEffect(() => {
+    if (!selected) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.querySelector<HTMLElement>("[role=dialog]")?.focus();
+    return () => {
+      document.body.style.overflow = overflow;
+      previous?.focus();
+    };
+  }, [selected?.id]);
+  const visible = useMemo(
+    () => filterDeals(city, category, query, savedOnly, saved),
+    [city, category, query, savedOnly, saved],
+  );
+  function toggleSaved(id: number) {
+    setSaved((old) => {
+      const next = old.includes(id)
+        ? old.filter((x) => x !== id)
+        : [...old, id];
+      try {
+        localStorage.setItem("dusk-saved", JSON.stringify(next));
+      } catch {
+        /* Saving remains available for this session. */
+      }
+      return next;
+    });
+  }
+  const categories: [Category, typeof Sparkles][] = [
+    ["All spots", Sparkles],
+    ["$1 drinks", Wine],
+    ["Cocktails", Wine],
+    ["Beer", Beer],
+    ["Late night", Moon],
+  ];
+  return (
+    <>
+      <header className="header">
+        <a
+          className="logo"
+          href="#"
+          aria-label="Dusk home"
+          onClick={() => {
+            setSavedOnly(false);
+            setCategory("All spots");
+            setQuery("");
+          }}
+        >
+          <img
+            src="/images/dusk-logo-placeholder.svg"
+            alt="Temporary DUSK sun-and-crescent logo"
+          />
+          DUSK<span className="temp-label">TEMP MARK</span>
+        </a>
+        <nav aria-label="Main navigation">
+          <button
+            className={!savedOnly ? "nav-active" : ""}
+            onClick={() => setSavedOnly(false)}
+          >
+            Discover
+          </button>
+          <button
+            className={savedOnly ? "nav-active" : ""}
+            onClick={() => setSavedOnly(true)}
+          >
+            Saved spots <span className="count">{saved.length}</span>
+          </button>
+        </nav>
+        <div className="city-select">
+          <MapPin size={16} />
+          <select
+            aria-label="Choose city"
+            value={city}
+            onChange={(e) => {
+              setCity(e.target.value as City);
+              setSelected(null);
+            }}
+          >
+            <option>Atlantic City</option>
+            <option>New York City</option>
+          </select>
+        </div>
+        <span className="age">21+ ONLY</span>
+      </header>
+      <main>
+        <section className="hero">
+          <div className="hero-copy">
+            <div className="eyebrow">
+              <span className="dot" /> GOOD NIGHTS START WITH A GOOD FIND
+            </div>
+            <h1>
+              Your night.
+              <br />
+              Our city.
+              <br />
+              <em>$1 Drinks.</em>
+            </h1>
+            <p>
+              Discover the $1 Drinks concept and a better night out.
+              <br />
+              Fictional offers. Non-redeemable previews.
+            </p>
+            <a className="primary" href="#discover">
+              $1 Drinks & more <ArrowUpRight size={20} />
+            </a>
+            <div className="hero-foot">
+              <span className="mini-star">✳</span> Made for the nights you
+              didn’t plan.
+            </div>
+          </div>
+          <div className="hero-photo">
+            <VenueImage
+              src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1400&q=85"
+              alt="Warmly lit bar with glasses hanging above the counter"
+            />
+            <div className="photo-shade" />
+            <span className="photo-label">OUT OF OFFICE. INTO THE NIGHT.</span>
+            <div className="hero-photo-bottom">
+              <div>
+                <span>YOUR CITY, AFTER DARK</span>
+                <strong>A little less ordinary.</strong>
+              </div>
+              <span className="round-arrow">
+                <ArrowUpRight />
+              </span>
+            </div>
+            <div className="sticker">
+              GOOD
+              <br />
+              NIGHTS
+              <br />
+              <span>AHEAD ↗</span>
+            </div>
+          </div>
+        </section>
+        <div className="launch-note">
+          <span className="pill">THE PREVIEW EDITION</span>
+          <p>
+            Exploring {city}. Fictional venues & non-redeemable offers. Launch
+            pending local regulatory approval.
+          </p>
+          <span className="note-star">✳</span>
+        </div>
+        <section id="discover" className="discover">
+          <div className="section-heading">
+            <div className="eyebrow">A SPOT FOR EVERY KIND OF NIGHT</div>
+            <div className="heading-row">
+              <h2>
+                {savedOnly ? "Your saved spots." : "Find your kind of night."}
+              </h2>
+              <span className="city-caption">
+                <MapPin size={15} /> {city} <span> / </span> Launch preview
+              </span>
+            </div>
+          </div>
+          <div className="tools">
+            <div
+              className="categories"
+              role="group"
+              aria-label="Filter by category"
+            >
+              {categories.map(([label, Icon]) => (
+                <button
+                  key={label}
+                  className={category === label ? "selected" : ""}
+                  onClick={() => setCategory(label)}
+                >
+                  <Icon size={16} />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <label className="search">
+              <Search size={17} />
+              <input
+                aria-label="Search spots"
+                placeholder="Search spots or neighborhoods"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </label>
+          </div>
+          <div className="results-row">
+            <span>
+              {visible.length} {visible.length === 1 ? "spot" : "spots"} to
+              discover <span className="muted">· Demo offers</span>
+            </span>
+            <div className="view-toggle" aria-label="View mode">
+              <button
+                aria-label="List view"
+                aria-pressed={view === "list"}
+                onClick={() => setView("list")}
+              >
+                <Grid2X2 size={15} />
+                List
+              </button>
+              <button
+                aria-label="Map view"
+                aria-pressed={view === "map"}
+                onClick={() => {
+                  setMapOpened(true);
+                  setView("map");
+                }}
+              >
+                <Map size={15} />
+                Map
+              </button>
+            </div>
+          </div>
+          {mapOpened && (
+            <div hidden={view !== "map"}>
+              <VenueMap
+                active={view === "map"}
+                city={city}
+                deals={visible}
+                onSelect={setSelected}
+              />
+            </div>
+          )}
+
+          <div className="cards">
+            {visible.map((deal) => (
+              <article className="card" key={deal.id}>
+                <div className="card-image">
+                  <VenueImage
+                    key={deal.image}
+                    src={`https://images.unsplash.com/${deal.image}?auto=format&fit=crop&w=700&q=80`}
+                    alt={
+                      deal.category === "Beer"
+                        ? "A drink served at a bar"
+                        : "A warmly lit nightlife setting"
+                    }
+                    loading="lazy"
+                  />
+                  <span className="demo-badge">NON-REDEEMABLE PREVIEW</span>
+                  <button
+                    className={`save ${saved.includes(deal.id) ? "is-saved" : ""}`}
+                    aria-label={`${saved.includes(deal.id) ? "Unsave" : "Save"} ${deal.name}`}
+                    aria-pressed={saved.includes(deal.id)}
+                    onClick={() => toggleSaved(deal.id)}
+                  >
+                    <Bookmark
+                      size={18}
+                      fill={saved.includes(deal.id) ? "currentColor" : "none"}
+                    />
+                  </button>
+                  <span className="offer-tag">
+                    {deal.category === "$1 drinks" ? (
+                      <>
+                        <span className="dollar">$1</span> HOUSE DRINKS
+                      </>
+                    ) : (
+                      deal.category.toUpperCase()
+                    )}
+                  </span>
+                </div>
+                <div className="card-body">
+                  <div className="card-kicker">{deal.tag}</div>
+                  <button
+                    className="card-title"
+                    onClick={() => setSelected(deal)}
+                  >
+                    {deal.name}
+                    <ArrowUpRight size={21} />
+                  </button>
+                  <div className="location">
+                    <MapPin size={13} />
+                    {deal.neighborhood} · {deal.city}
+                  </div>
+                  <div className="card-bottom">
+                    <span>
+                      <Clock size={14} />
+                      {deal.time}
+                    </span>
+                    <button onClick={() => setSelected(deal)}>
+                      View spot <ArrowRight size={15} />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          {visible.length === 0 && (
+            <div className="empty">
+              <SlidersHorizontal />
+              <h3>No spots here yet.</h3>
+              <p>
+                {savedOnly
+                  ? "Save a spot using its bookmark button, or explore another city."
+                  : "Try another category or a different search."}
+              </p>
+              <button
+                className="primary"
+                onClick={() => {
+                  setQuery("");
+                  setCategory("All spots");
+                  setSavedOnly(false);
+                }}
+              >
+                Explore all spots <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
+        </section>
+        <section className="bottom-banner">
+          <div>
+            <div className="eyebrow">THE NIGHT IS YOURS</div>
+            <h2>
+              Go somewhere new.
+              <br />
+              Make it a good story.
+            </h2>
+          </div>
+          <span>✳</span>
+          <p>
+            A better way to discover
+            <br />
+            what’s happening after dark.
+          </p>
+        </section>
+      </main>
+      <footer>
+        <a className="logo" href="#">
+          <img
+            src="/images/dusk-logo-placeholder.svg"
+            alt="Temporary DUSK sun-and-crescent logo"
+          />
+          DUSK<span className="temp-label">TEMP MARK</span>
+        </a>
+        <p>Good spots. Better nights.</p>
+        <small>
+          21+ · Enjoy responsibly. Demo only; offers are not redeemable.
+        </small>
+        <span>© {new Date().getFullYear()} DUSK</span>
+      </footer>
+      {selected && (
+        <div className="modal-backdrop" onClick={() => setSelected(null)}>
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="venue-title"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setSelected(null);
+              if (e.key === "Tab") {
+                const items = Array.from(
+                  e.currentTarget.querySelectorAll<HTMLElement>(
+                    "button, iframe, a[href], input, select",
+                  ),
+                );
+                const first = items[0],
+                  last = items[items.length - 1];
+                if (
+                  e.shiftKey &&
+                  (document.activeElement === first ||
+                    document.activeElement === e.currentTarget)
+                ) {
+                  e.preventDefault();
+                  last?.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                  e.preventDefault();
+                  first?.focus();
+                }
+              }
+            }}
+            tabIndex={-1}
+          >
+            <button
+              className="close"
+              aria-label="Close venue details"
+              onClick={() => setSelected(null)}
+            >
+              <X />
+            </button>
+            <div className="eyebrow">FICTIONAL VENUE · LAUNCH PREVIEW</div>
+            <h2 id="venue-title">{selected.name}</h2>
+            <p>{selected.description}</p>
+            <h3>{selected.offer}</h3>
+            <p>
+              <Clock size={15} /> Sample hours: {selected.time}
+            </p>
+            <div className="detail-warning">
+              Demo only. No offer can be purchased or redeemed. Any launch and
+              promotion require local regulatory approval and venue
+              confirmation. For adults 21+.
+            </div>
+            <p className="demo-coordinate-note">
+              Fictional demo coordinates only — this is not a verified venue
+              address.
+            </p>
+            <a
+              className="directions-link"
+              href={directionsUrl(selected)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Directions to demo coordinates <ArrowUpRight size={16} />
+            </a>
+            <button
+              className="primary"
+              onClick={() => toggleSaved(selected.id)}
+            >
+              {saved.includes(selected.id)
+                ? "Remove from saved"
+                : "Save this spot"}
+              <Bookmark size={16} />
+            </button>
+          </section>
+        </div>
+      )}
+    </>
+  );
+}
+const root = document.getElementById("root");
+if (root)
+  createRoot(root).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );

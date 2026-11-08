@@ -8,13 +8,13 @@ This is a TypeScript design contract, not a database migration. Only fictional v
 
 ## Core entities
 
-| Entity | Fields | Relationship / purpose |
-| --- | --- | --- |
-| Venue | `id`, `name`, `city`, `neighborhood`, `timeZone`, `status` | Stable venue identity shared by offers and later experiences. Current records are `preview`. |
-| Deal | Existing numeric `id`, `venueId`, category, offer copy, description, display hours, image, tag | Many offers can reference one venue. Venue name and location are joined into the current flat UI model. |
-| Customer | `id`, `displayName`, `status` | Minimal private customer profile; no accounts are created in this version. |
-| Staff | `id`, `displayName`, `status` | Minimal private staff profile, separate from a customer's public-facing identity. |
-| VenueStaffAssignment | `venueId`, `staffId`, `role`, `status` | Many-to-many venue membership; `manager` or `staff` role scoped to one venue. |
+| Entity               | Fields                                                                                         | Relationship / purpose                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Venue                | `id`, `name`, `city`, `neighborhood`, `timeZone`, `status`, `demoLocation`                     | Stable venue identity shared by offers and later experiences. Current records are `preview`.            |
+| Deal                 | Existing numeric `id`, `venueId`, category, offer copy, description, display hours, image, tag | Many offers can reference one venue. Venue name and location are joined into the current flat UI model. |
+| Customer             | `id`, `displayName`, `status`                                                                  | Minimal private customer profile; no accounts are created in this version.                              |
+| Staff                | `id`, `displayName`, `status`                                                                  | Minimal private staff profile, separate from a customer's public-facing identity.                       |
+| VenueStaffAssignment | `venueId`, `staffId`, `role`, `status`                                                         | Many-to-many venue membership; `manager` or `staff` role scoped to one venue.                           |
 
 IDs are opaque, stable strings except for existing numeric deal IDs, retained to preserve local saved spots. Do not derive IDs from names, emails, or array positions in production. Fixtures use explicit IDs. Do not embed customer lists, staff lists, reservations, or event arrays inside venue records.
 
@@ -26,14 +26,14 @@ Staff roles are design vocabulary, not implemented permissions. When adding a ba
 
 These are relationship sketches, not implemented interfaces or storage tables. Final fields and states should be decided with each feature's actual requirements.
 
-| Extension | Proposed minimum fields / references | Design boundary |
-| --- | --- | --- |
-| PromoterProfile | `id`, public `displayName`, private identity link | Separate public promoter profile from customer/staff records. A promoter need not be venue staff. |
-| VenuePromoterAssignment | `venueId`, `promoterId`, `status` | Explicit venue affiliation; never infer staff privileges from promotion work. |
-| NightlifeEvent | `id`, `venueId`, title, `startsAt`, `endsAt`, status | One venue per initial event. Optional event/promoter join records if multiple promoters are needed. Store UTC instants and use venue IANA time zone for display. |
-| GuestList | `id`, `eventId`, name, optional capacity | Event-scoped list. Later entries reference `guestListId`, `customerId`, party size, and status; use a uniqueness rule per customer/list and define plus-one policy before launch. |
-| VenueTable | `id`, `venueId`, label, capacity, status | Venue-specific inventory, added only when reservations are implemented. |
-| TableReservation | `id`, `tableId`, `customerId`, optional `eventId`, `startsAt`, `endsAt`, party size, status | Table resolves its venue; optional event must belong to that venue. Supports event and non-event reservations. |
+| Extension               | Proposed minimum fields / references                                                        | Design boundary                                                                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PromoterProfile         | `id`, public `displayName`, private identity link                                           | Separate public promoter profile from customer/staff records. A promoter need not be venue staff.                                                                                 |
+| VenuePromoterAssignment | `venueId`, `promoterId`, `status`                                                           | Explicit venue affiliation; never infer staff privileges from promotion work.                                                                                                     |
+| NightlifeEvent          | `id`, `venueId`, title, `startsAt`, `endsAt`, status                                        | One venue per initial event. Optional event/promoter join records if multiple promoters are needed. Store UTC instants and use venue IANA time zone for display.                  |
+| GuestList               | `id`, `eventId`, name, optional capacity                                                    | Event-scoped list. Later entries reference `guestListId`, `customerId`, party size, and status; use a uniqueness rule per customer/list and define plus-one policy before launch. |
+| VenueTable              | `id`, `venueId`, label, capacity, status                                                    | Venue-specific inventory, added only when reservations are implemented.                                                                                                           |
+| TableReservation        | `id`, `tableId`, `customerId`, optional `eventId`, `startsAt`, `endsAt`, party size, status | Table resolves its venue; optional event must belong to that venue. Supports event and non-event reservations.                                                                    |
 
 For future booking, validate time order, positive party size, table capacity, event/venue consistency, and permitted transitions on the server. Prevent overlapping confirmed reservations and guest-list capacity overruns atomically in the chosen database. Add request idempotency when writes exist. None of that infrastructure belongs in the discovery MVP.
 
@@ -42,7 +42,7 @@ For future booking, validate time order, positive party size, table capacity, ev
 - Keep venue discovery data separate from private customer and staff records. Do not ship private records in frontend bundles.
 - Do not collect email, phone, birth date, identity documents, payment details, or guest names in anticipation of a future feature. Define purpose, access, and retention when a feature needs them. Profile existence is not proof of age or verification.
 - Keep current local saved spots anonymous. If accounts are added, design an explicit opt-in migration rather than silently linking device history to a person.
-- Add verified street addresses/coordinates with real venue onboarding; neighborhood embeds remain appropriate for the fictional preview.
+- Add verified street addresses/coordinates with real venue onboarding; explicitly labeled fictional demo coordinates are used for preview markers and directions. No geocoding is performed.
 - No ORM, hosted database, authentication service, booking vendor, billing system, analytics, or new dependency is needed for these contracts.
 - Do not build a generic metadata bag, permissions engine, event bus, repository abstraction, or speculative schema migrations. Add concrete fields and constraints incrementally.
 
