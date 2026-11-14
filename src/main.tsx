@@ -17,36 +17,48 @@ import {
 } from "lucide-react";
 import {
   filterDeals,
-  directionsUrl,
+  deals,
+  knownSavedIds,
+  realVenueListings,
   type City,
   type Category,
-  type Deal,
+  type Listing,
+  type SavedId,
 } from "./data";
+import { venueDirectionsUrl } from "./domain/directions";
+import type { RealVenue } from "./domain/models";
 import { VenueMap } from "./components/VenueMap";
 import { VenueImage } from "./components/VenueImage";
 import { useScreen, type Screen } from "./navigation/useScreen";
 import symbolLogo from "./assets/dusk-logo-new.png";
 import "./style.css";
-function readSaved(): number[] {
+function readSaved(key: string): unknown {
   try {
-    const value = JSON.parse(localStorage.getItem("dusk-saved") || "[]");
-    return Array.isArray(value)
-      ? value.filter((v: unknown): v is number => typeof v === "number")
-      : [];
+    return JSON.parse(localStorage.getItem(key) || "[]");
   } catch {
     return [];
   }
 }
-export function App() {
+export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } = {}) {
   const { screen, navigate } = useScreen();
+  const savedKey = publicCatalog ? "dusk-saved-venues" : "dusk-saved";
+  const listings = useMemo(
+    () => publicCatalog ? realVenueListings(publicCatalog) : deals,
+    [publicCatalog],
+  );
   const [city, setCity] = useState<City>("Atlantic City"),
     [category, setCategory] = useState<Category>("All spots"),
     [query, setQuery] = useState(""),
-    [saved, setSaved] = useState<number[]>(readSaved),
+    [storedSaved, setSaved] = useState<SavedId[]>(() => knownSavedIds(readSaved(savedKey), listings)),
     [mapSavedOnly, setMapSavedOnly] = useState(false),
-    [selected, setSelected] = useState<Deal | null>(null),
+    [selectedId, setSelectedId] = useState<SavedId | null>(null),
     [mapOpened, setMapOpened] = useState(screen === "map");
   const savedOnly = screen === "saved" || (screen === "map" && mapSavedOnly);
+  const saved = useMemo(() => knownSavedIds(storedSaved, listings), [storedSaved, listings]);
+  const selected = listings.find(({ id }) => id === selectedId);
+  function setSelected(listing: Listing | null) {
+    setSelectedId(listing?.id ?? null);
+  }
   useEffect(() => {
     if (screen === "map") setMapOpened(true);
     setSelected(null);
@@ -64,16 +76,16 @@ export function App() {
     };
   }, [selected?.id]);
   const visible = useMemo(
-    () => filterDeals(city, category, query, savedOnly, saved),
-    [city, category, query, savedOnly, saved],
+    () => filterDeals(city, category, query, savedOnly, saved, listings),
+    [city, category, query, savedOnly, saved, listings],
   );
-  function toggleSaved(id: number) {
+  function toggleSaved(id: SavedId) {
     setSaved((old) => {
       const next = old.includes(id)
         ? old.filter((x) => x !== id)
         : [...old, id];
       try {
-        localStorage.setItem("dusk-saved", JSON.stringify(next));
+        localStorage.setItem(savedKey, JSON.stringify(next));
       } catch {
         /* Saving remains available for this session. */
       }
@@ -87,7 +99,7 @@ export function App() {
     ["Beer", Beer],
     ["Late night", Moon],
   ];
-  const selectedDirections = selected ? directionsUrl(selected) : null;
+  const selectedDirections = venueDirectionsUrl(selected?.venue);
   return (
     <>
       <header className="header">
@@ -167,7 +179,7 @@ export function App() {
         ))}
       </nav>
       <main className={`app-screen-${screen}`}>
-        <section className="hero" hidden={screen !== "discover"}>
+        <section className="hero" hidden={screen !== "discover" || !!publicCatalog}>
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="dot" /> GOOD NIGHTS START WITH A GOOD FIND
@@ -217,7 +229,7 @@ export function App() {
             </div>
           </div>
         </section>
-        {screen === "discover" && (
+        {screen === "discover" && !publicCatalog && (
           <section className="mobile-intro" aria-label="DUSK deals">
             <span className="eyebrow">YOUR CITY. AFTER DARK.</span>
             <h1>
@@ -225,14 +237,16 @@ export function App() {
             </h1>
           </section>
         )}
-        <div className="launch-note">
-          <p>
-            21+ · Fictional, non-redeemable previews.
-            <span className="launch-note-approval">
-              {" "}Launch pending local regulatory approval.
-            </span>
-          </p>
-        </div>
+        {!publicCatalog && (
+          <div className="launch-note">
+            <p>
+              21+ · Fictional, non-redeemable previews.
+              <span className="launch-note-approval">
+                {" "}Launch pending local regulatory approval.
+              </span>
+            </p>
+          </div>
+        )}
         <section
           id="deals"
           className={`discover screen-${screen}`}
@@ -249,12 +263,13 @@ export function App() {
                     : "Find your kind of night."}
               </h2>
               <span className="city-caption">
-                <MapPin size={15} /> {city} <span> / </span> Launch preview
+                <MapPin size={15} /> {city}
+                {!publicCatalog && <> <span> / </span> Launch preview</>}
               </span>
             </div>
           </div>
           <div className="tools">
-            <div
+            {!publicCatalog && <div
               className="categories"
               role="group"
               aria-label="Filter by category"
@@ -270,7 +285,7 @@ export function App() {
                   {label}
                 </button>
               ))}
-            </div>
+            </div>}
             <label className="search">
               <Search size={17} />
               <input
@@ -301,6 +316,7 @@ export function App() {
             <div className="map-slot" hidden={screen !== "map"}>
               <VenueMap
                 active={screen === "map"}
+                preview={!publicCatalog}
                 city={city}
                 deals={visible}
                 onSelect={setSelected}
@@ -309,7 +325,7 @@ export function App() {
           )}
 
           <div className="cards">
-            {visible.map((deal) => (
+            {visible.map((deal) => "offer" in deal ? (
               <article className="card" key={deal.id}>
                 <div className="card-image">
                   <VenueImage
@@ -325,7 +341,7 @@ export function App() {
                   <span className="demo-badge">NON-REDEEMABLE PREVIEW</span>
                   <button
                     className={`save ${saved.includes(deal.id) ? "is-saved" : ""}`}
-                    aria-label={`${saved.includes(deal.id) ? "Unsave" : "Save"} ${deal.name}`}
+                    aria-label={`${saved.includes(deal.id) ? "Unsave" : "Save"} ${deal.venue.name}`}
                     aria-pressed={saved.includes(deal.id)}
                     onClick={() => toggleSaved(deal.id)}
                   >
@@ -350,12 +366,12 @@ export function App() {
                     className="card-title"
                     onClick={() => setSelected(deal)}
                   >
-                    {deal.name}
+                    {deal.venue.name}
                     <ArrowUpRight size={21} />
                   </button>
                   <div className="location">
                     <MapPin size={13} />
-                    {deal.neighborhood} · {deal.city}
+                    {deal.venue.neighborhood} · {deal.venue.city}
                   </div>
                   <div className="card-bottom">
                     <span>
@@ -366,6 +382,15 @@ export function App() {
                       View spot <ArrowRight size={15} />
                     </button>
                   </div>
+                </div>
+              </article>
+            ) : (
+              <article className="card" key={deal.id}>
+                <div className="card-body">
+                  <button className="card-title" onClick={() => setSelected(deal)}>
+                    {deal.venue.name} <ArrowUpRight size={21} />
+                  </button>
+                  <div className="location"><MapPin size={13} /> {deal.venue.address}</div>
                 </div>
               </article>
             ))}
@@ -464,22 +489,30 @@ export function App() {
             >
               <X />
             </button>
-            <div className="eyebrow">FICTIONAL VENUE · LAUNCH PREVIEW</div>
-            <h2 id="venue-title">{selected.name}</h2>
-            <p>{selected.description}</p>
-            <h3>{selected.offer}</h3>
-            <p>
-              <Clock size={15} /> Sample hours: {selected.time}
-            </p>
-            <div className="detail-warning">
-              Demo only. No offer can be purchased or redeemed. Any launch and
-              promotion require local regulatory approval and venue
-              confirmation. For adults 21+.
+            <div className="eyebrow">
+              {selected.venue.isDemo ? "FICTIONAL VENUE · LAUNCH PREVIEW" : "VENUE DETAILS"}
             </div>
-            <p className="demo-coordinate-note">
-              Fictional demo coordinates only — this is not a verified venue
-              address.
-            </p>
+            <h2 id="venue-title">{selected.venue.name}</h2>
+            {"offer" in selected ? (
+              <>
+                <p>{selected.description}</p>
+                <h3>{selected.offer}</h3>
+                <p>
+                  <Clock size={15} /> Sample hours: {selected.time}
+                </p>
+                <div className="detail-warning">
+                  Demo only. No offer can be purchased or redeemed. Any launch and
+                  promotion require local regulatory approval and venue
+                  confirmation. For adults 21+.
+                </div>
+                <p className="demo-coordinate-note">
+                  Fictional demo coordinates only — this is not a verified venue
+                  address.
+                </p>
+              </>
+            ) : (
+              <p>{selected.venue.address}</p>
+            )}
             {selectedDirections ? (
               <a
                 className="directions-link"
@@ -491,7 +524,7 @@ export function App() {
               </a>
             ) : (
               <p className="directions-unavailable">
-                Demo location — directions unavailable
+                {selected.venue.isDemo ? "Demo location — directions unavailable" : "Directions unavailable"}
               </p>
             )}
             <button

@@ -10,21 +10,32 @@ This is a TypeScript design contract, not a database migration. Only fictional v
 
 | Entity               | Fields                                                                                                            | Relationship / purpose                                                                                  |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Venue                | `id`, `name`, `city`, `neighborhood`, `timeZone`, `status`, `demoLocation`, `isDemo`, optional `verifiedLocation` | Stable venue identity shared by offers and later experiences. Current records are `preview`.            |
-| Deal                 | Existing numeric `id`, `venueId`, category, offer copy, description, display hours, image, tag                    | Many offers can reference one venue. Venue name and location are joined into the current flat UI model. |
+| Venue                | Stable ID, name, market/city, neighborhood, IANA time zone, venue category, and explicit demo or real status | Demo rows have `preview` state and a fictional pin. Real rows have `draft`, `verified`, `published`, or `suspended` state, a street address required for verification/publication, and optional independently verified coordinates. |
+| VenueVerification    | Venue ID, reviewer, review date, address source, and a coordinate source when coordinates are present | Private publication input, excluded from the public catalog. |
+| Deal                 | Existing numeric ID, venue reference, offer category, copy, sample hours, image, and tag | Preview offers can reference demo venues only. The UI uses the same venue record for cards, pins, and details. |
 | Customer             | `id`, `displayName`, `status`                                                                                     | Minimal private customer profile; no accounts are created in this version.                              |
 | Staff                | `id`, `displayName`, `status`                                                                                     | Minimal private staff profile, separate from a customer's public-facing identity.                       |
 | VenueStaffAssignment | `venueId`, `staffId`, `role`, `status`                                                                            | Many-to-many venue membership; `manager` or `staff` role scoped to one venue.                           |
 
 IDs are opaque, stable strings except for existing numeric deal IDs, retained to preserve local saved spots. Do not derive IDs from names, emails, or array positions in production. Fixtures use explicit IDs. Do not embed customer lists, staff lists, reservations, or event arrays inside venue records.
 
-A future persistence layer must enforce referenced record existence and uniqueness of `(venueId, staffId)`. Removing an assignment must not delete a person's profile. Deactivate core records with history rather than cascading deletion into future bookings. `active` indicates operational status only; it never authorizes an alcohol promotion. Regulatory approval will need its own scoped, verified model before live offers.
+A future persistence layer must enforce referenced record existence and uniqueness of `(venueId, staffId)`. Removing an assignment must not delete a person's profile. Deactivate core records with history rather than cascading deletion into future bookings. Venue publication authorizes directory visibility only. Live promotions would require separate review and approval.
+
+## Introducing verified venues
+
+1. Assign each real venue a new, permanent ID. Confirm the name, market, category, address, and time zone with an authorized venue contact. Keep the source and reviewer in a private verification record. Verify coordinates independently before attaching them.
+2. Use `validateCatalog` to check unique and nonempty IDs, preview offer references, required fields, supported market/category, IANA time zone, publication/verification consistency, and coordinate bounds. Select only records approved for publication and pass them with their private reviews to `exportPublicCatalog` in a private workflow. The export rejects demo and unpublished rows and emits only allowlisted public fields.
+3. Supply only that public output to the app's public catalog input. The current entry point still loads the fictional preview. A published real venue with an address can appear in the list without coordinates. A pin and directions require the same verified coordinates. Suspension removes eligibility for all three. Demo pins remain available only in the preview and never enable directions.
+
+Existing preview saves retain their numeric IDs. Unknown or obsolete IDs are ignored. Real venue saves use stable venue IDs and separate local storage.
 
 Staff roles are design vocabulary, not implemented permissions. When adding a backend, check both staff and assignment status server-side for the requested venue; never trust client flags or role strings. If a person is both customer and staff, keep those profiles separate and link them through a private authentication identity later. Do not introduce an auth provider or universal user/role framework now.
 
 ## Future extensions — design only, disabled
 
 These are relationship sketches, not implemented interfaces or storage tables. Final fields and states should be decided with each feature's actual requirements.
+
+DUSK may later support venue-based, opt-in dating or social discovery. Stable venue IDs can identify the venue for those features. This phase adds no dating, profiles, location verification, or social functionality.
 
 | Extension               | Proposed minimum fields / references                                                        | Design boundary                                                                                                                                                                   |
 | ----------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -11,6 +11,7 @@ import { App } from "../main";
 import { VenueMap } from "./VenueMap";
 import { deals } from "../data";
 import { loadGoogleMaps } from "../maps/loader";
+import type { RealVenue } from "../domain/models";
 vi.mock("../maps/loader", () => ({ loadGoogleMaps: vi.fn() }));
 let maps: FakeMap[] = [];
 let markers: FakeMarker[] = [];
@@ -66,6 +67,33 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   vi.clearAllMocks();
+});
+test("real cards, pins and directions share the published venue record", async () => {
+  const location = { lat: 39.4, lng: -74.4, verified: true } as const;
+  const venue: RealVenue = {
+    id: "test-mapped", isDemo: false, status: "published", category: "bar",
+    name: "Mapped test venue", address: "10 Test Street", neighborhood: "Test district",
+    timeZone: "America/New_York", city: "Atlantic City", verifiedLocation: location,
+  };
+  render(<App publicCatalog={[
+    venue,
+    { ...venue, id: "test-list", name: "List-only test venue", verifiedLocation: undefined },
+    { ...venue, id: "test-hidden", name: "Suspended test venue", status: "suspended" },
+  ]} />);
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
+  await waitFor(() => expect(active()).toHaveLength(1));
+  expect(active()[0].position).toMatchObject(location);
+  expect(screen.queryByText("Suspended test venue")).not.toBeInTheDocument();
+  expect(screen.queryByText("NON-REDEEMABLE PREVIEW")).not.toBeInTheDocument();
+  fireEvent.click(active()[0].content!);
+  expect(screen.getByRole("dialog", { name: venue.name })).toHaveTextContent(venue.address!);
+  expect(screen.getByRole("link", { name: "Directions" })).toHaveAttribute(
+    "href", "https://www.google.com/maps/dir/?api=1&destination=39.4,-74.4",
+  );
+  fireEvent.click(screen.getByLabelText("Close venue details"));
+  fireEvent.click(screen.getByRole("button", { name: "List-only test venue" }));
+  expect(screen.getByRole("dialog")).toHaveTextContent("Directions unavailable");
+  expect(screen.queryByRole("link", { name: "Directions" })).not.toBeInTheDocument();
 });
 test("markers follow city, search, category and saved filters and open the offer preview", async () => {
   render(<App />);

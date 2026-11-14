@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
-import { venues, type City, type Deal } from "../data";
+import type { City, Listing } from "../data";
+import { venueMapPosition } from "../domain/catalog";
 import { loadGoogleMaps } from "../maps/loader";
 
 export function VenueMap({
@@ -8,13 +9,15 @@ export function VenueMap({
   deals,
   onSelect,
   active = true,
+  preview = true,
   apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
 }: {
   city: City;
-  deals: Deal[];
-  onSelect: (deal: Deal) => void;
+  deals: Listing[];
+  onSelect: (deal: Listing) => void;
   apiKey?: string;
   active?: boolean;
+  preview?: boolean;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -26,6 +29,13 @@ export function VenueMap({
   const [locationStatus, setLocationStatus] = useState("");
   const [userPosition, setUserPosition] =
     useState<google.maps.LatLngLiteral | null>(null);
+  const pins = useMemo(
+    () => deals.flatMap((listing) => {
+      const position = venueMapPosition(listing.venue);
+      return position ? [{ listing, position }] : [];
+    }),
+    [deals],
+  );
   useEffect(() => {
     if (!apiKey) return;
     let cancelled = false;
@@ -63,38 +73,34 @@ export function VenueMap({
     const map = mapRef.current;
     const markers: google.maps.marker.AdvancedMarkerElement[] = [];
     const bounds = new google.maps.LatLngBounds();
-    for (const deal of deals) {
-      const venue = venues.find((v) => v.id === deal.venueId)!;
-      const position = {
-        lat: venue.demoLocation.lat,
-        lng: venue.demoLocation.lng,
-      };
+    for (const { listing, position } of pins) {
+      const { venue } = listing;
+      const title = venue.isDemo ? `${venue.name} — demo location` : venue.name;
       const button = document.createElement("button");
       button.type = "button";
       button.className = "venue-marker";
-      button.textContent = deal.category === "$1 drinks" ? "$1" : "●";
+      button.textContent = "offer" in listing && listing.category === "$1 drinks" ? "$1" : "●";
       button.setAttribute(
         "aria-label",
-        `${deal.name}: ${deal.offer}. Demo coordinates. Open venue preview`,
+        "offer" in listing
+          ? `${venue.name}: ${listing.offer}. Demo coordinates. Open venue preview`
+          : `${venue.name}. Open venue details`,
       );
-      button.addEventListener("click", () => selectRef.current(deal));
+      button.addEventListener("click", () => selectRef.current(listing));
       markers.push(
         new google.maps.marker.AdvancedMarkerElement({
           map,
           position,
           content: button,
-          title: `${deal.name} — demo location`,
+          title,
         }),
       );
       bounds.extend(position);
     }
-    if (deals.length === 1) {
-      const { lat, lng } = venues.find(
-        (v) => v.id === deals[0].venueId,
-      )!.demoLocation;
-      map.setCenter({ lat, lng });
+    if (pins.length === 1) {
+      map.setCenter(pins[0].position);
       map.setZoom(15);
-    } else if (deals.length > 1) {
+    } else if (pins.length > 1) {
       map.fitBounds(bounds, 60);
     } else {
       map.setCenter(
@@ -109,7 +115,7 @@ export function VenueMap({
         marker.map = null;
       });
     };
-  }, [city, deals, status, active]);
+  }, [city, pins, status, active]);
   useEffect(() => {
     if (!userPosition || status !== "ready" || !mapRef.current) return;
     const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -151,10 +157,11 @@ export function VenueMap({
     <section className="map-panel" aria-label="Venue map">
       <div className="map-info">
         <div>
-          <strong>Demo venue map</strong>
+          <strong>{preview ? "Demo venue map" : "Venue map"}</strong>
           <p className="map-intro-desktop">
-            All pins use fictional demo coordinates — not verified venue
-            addresses. Select a pin or a venue below for its offer.
+            {preview
+              ? "All pins use fictional demo coordinates — not verified venue addresses. Select a pin or a venue below for its offer."
+              : "Published venues with verified coordinates appear on the map."}
           </p>
         </div>
       </div>
@@ -174,11 +181,12 @@ export function VenueMap({
               : (
                 <>
                   <span className="map-status-desktop">
-                    {deals.length} filtered demo venue pins. The same venues
-                    appear in the list below.
+                    {preview
+                      ? `${pins.length} filtered demo venue pins. The same venues appear in the list below.`
+                      : `${pins.length} mapped venues. Browse all matching venues below.`}
                   </span>
                   <span className="map-status-mobile">
-                    {deals.length} {deals.length === 1 ? "pin" : "pins"}
+                    {pins.length} {pins.length === 1 ? "pin" : "pins"}
                   </span>
                 </>
               )}

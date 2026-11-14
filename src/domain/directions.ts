@@ -1,16 +1,11 @@
 import type { Venue } from "./models";
+import { venueMapPosition } from "./catalog";
 
 /** Fail closed: demo pins and ordinary coordinates never establish verification. */
 export function venueDirectionsUrl(venue: Venue | undefined): string | null {
-  const location = venue?.verifiedLocation;
-  if (venue?.isDemo !== false || location?.verified !== true) return null;
-  const { lat, lng } = location;
-  if (
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lng) ||
-    Math.abs(lat) > 90 ||
-    Math.abs(lng) > 180
-  )
-    return null;
+  if (venue?.isDemo !== false) return null;
+  const position = venueMapPosition(venue);
+  if (!position) return null;
+  const { lat, lng } = position;
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }

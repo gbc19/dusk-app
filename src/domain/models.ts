@@ -4,21 +4,43 @@ export type VenueId = string;
 export type CustomerId = string;
 export type StaffId = string;
 
-export interface Venue {
+export const venueCategories = ["bar", "cocktail-bar", "beer-hall", "nightclub"] as const;
+export type Coordinates = { lat: number; lng: number };
+
+interface VenueIdentity {
   id: VenueId;
   name: string;
   city: City;
   neighborhood: string;
-  /** Explicit venue identity; existing preview venues must remain demo-only. */
-  isDemo: boolean;
-  /** Reserved for independently verified real venue data, never copied from demo pins. */
-  verifiedLocation?: { lat: number; lng: number; verified: true };
-  /** Fictional map position, never a verified address or real promotion location. */
-  demoLocation: { lat: number; lng: number; kind: "demo" };
-  /** IANA time zone, for future local event and reservation times. */
-  timeZone: "America/New_York";
-  /** Preview is never evidence of approval for a live promotion. */
-  status: "preview" | "active" | "inactive";
+  timeZone: string;
+  category: (typeof venueCategories)[number];
+}
+
+export interface DemoVenue extends VenueIdentity {
+  isDemo: true;
+  status: "preview";
+  demoLocation: Coordinates & { kind: "demo" };
+  address?: never;
+  verifiedLocation?: never;
+}
+
+export interface RealVenue extends VenueIdentity {
+  isDemo: false;
+  status: "draft" | "verified" | "published" | "suspended";
+  address?: string;
+  verifiedLocation?: Coordinates & { verified: true };
+  demoLocation?: never;
+}
+
+export type Venue = DemoVenue | RealVenue;
+
+/** Private input for catalog review, never part of a public venue record. */
+export interface VenueVerification {
+  venueId: VenueId;
+  reviewedBy: string;
+  reviewedAt: string;
+  source: string;
+  coordinateSource?: string;
 }
 
 /** Private profile. Not used by anonymous MVP browsing or local saved spots. */

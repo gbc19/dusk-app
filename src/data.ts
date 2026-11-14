@@ -1,14 +1,11 @@
-import { venueDirectionsUrl } from "./domain/directions";
-import type { City, Venue } from "./domain/models";
+import { isVenueVisible, validateCatalog } from "./domain/catalog";
+import type { City, DemoVenue, RealVenue, Venue } from "./domain/models";
 export type { City } from "./domain/models";
 export type Category =
   "All spots" | "$1 drinks" | "Cocktails" | "Beer" | "Late night";
 export interface Deal {
   id: number;
-  venueId: string;
-  name: string;
-  city: City;
-  neighborhood: string;
+  venue: DemoVenue;
   category: Category;
   offer: string;
   description: string;
@@ -16,12 +13,16 @@ export interface Deal {
   image: string;
   tag: string;
 }
-export const venues: readonly Venue[] = [
+export type Listing = Deal | { id: string; venue: RealVenue };
+export type SavedId = Listing["id"];
+
+export const venues: readonly DemoVenue[] = [
   {
     id: "venue-1",
     isDemo: true,
     demoLocation: { lat: 39.3543, lng: -74.4335, kind: "demo" },
     name: "The Velvet Room",
+    category: "bar",
     city: "Atlantic City",
     neighborhood: "The Boardwalk",
     timeZone: "America/New_York",
@@ -32,6 +33,7 @@ export const venues: readonly Venue[] = [
     isDemo: true,
     demoLocation: { lat: 39.36, lng: -74.4269, kind: "demo" },
     name: "Ember & Violet",
+    category: "cocktail-bar",
     city: "Atlantic City",
     neighborhood: "Orange Loop",
     timeZone: "America/New_York",
@@ -42,6 +44,7 @@ export const venues: readonly Venue[] = [
     isDemo: true,
     demoLocation: { lat: 39.3784, lng: -74.427, kind: "demo" },
     name: "Low Tide Beer Hall",
+    category: "beer-hall",
     city: "Atlantic City",
     neighborhood: "Marina District",
     timeZone: "America/New_York",
@@ -52,6 +55,7 @@ export const venues: readonly Venue[] = [
     isDemo: true,
     demoLocation: { lat: 39.3564, lng: -74.4431, kind: "demo" },
     name: "Midnight Standard",
+    category: "nightclub",
     city: "Atlantic City",
     neighborhood: "Ducktown",
     timeZone: "America/New_York",
@@ -62,6 +66,7 @@ export const venues: readonly Venue[] = [
     isDemo: true,
     demoLocation: { lat: 40.7184, lng: -73.9875, kind: "demo" },
     name: "Juniper & Co.",
+    category: "cocktail-bar",
     city: "New York City",
     neighborhood: "Lower East Side",
     timeZone: "America/New_York",
@@ -72,6 +77,7 @@ export const venues: readonly Venue[] = [
     isDemo: true,
     demoLocation: { lat: 40.7143, lng: -73.9614, kind: "demo" },
     name: "The Night Shift",
+    category: "nightclub",
     city: "New York City",
     neighborhood: "Williamsburg",
     timeZone: "America/New_York",
@@ -79,8 +85,8 @@ export const venues: readonly Venue[] = [
   },
 ];
 
-// Flat display model keeps the existing MVP UI and numeric saved-deal IDs stable.
-const offers: Omit<Deal, "name" | "city" | "neighborhood">[] = [
+// Keep the preview UI and numeric saved-deal IDs stable.
+const offers: (Omit<Deal, "venue"> & { venueId: string })[] = [
   {
     id: 1,
     venueId: "venue-1",
@@ -146,34 +152,46 @@ const offers: Omit<Deal, "name" | "city" | "neighborhood">[] = [
     tag: "THE NIGHT IS STILL YOUNG",
   },
 ];
-export const deals: Deal[] = offers.map((offer) => {
-  const venue = venues.find((item) => item.id === offer.venueId);
-  if (!venue) throw new Error(`Unknown venue: ${offer.venueId}`);
-  return {
-    ...offer,
-    name: venue.name,
-    city: venue.city,
-    neighborhood: venue.neighborhood,
-  };
+const errors = validateCatalog(venues, offers);
+if (errors.length) throw new Error(errors.join("\n"));
+
+const venuesById = new Map(venues.map((venue) => [venue.id, venue]));
+export const deals: Deal[] = offers.map(({ venueId, ...offer }) => {
+  const venue = venuesById.get(venueId);
+  if (!venue) throw new Error(`Unknown venue: ${venueId}`);
+  return { ...offer, venue };
 });
+
+export function realVenueListings(catalog: readonly Venue[]): Listing[] {
+  return catalog.flatMap((venue) =>
+    !venue.isDemo && isVenueVisible(venue)
+      ? [{ id: venue.id, venue }]
+      : [],
+  );
+}
+
+export function knownSavedIds(value: unknown, listings: readonly Listing[] = deals): SavedId[] {
+  if (!Array.isArray(value)) return [];
+  const known = new Set(listings.map(({ id }) => id));
+  return [...new Set(value.filter((id) => known.has(id)))];
+}
 
 export function filterDeals(
   city: City,
   category: Category,
   query: string,
   savedOnly: boolean,
-  saved: number[],
+  saved: SavedId[],
+  catalog: readonly Listing[] = deals,
 ) {
-  return deals.filter(
-    (d) =>
-      d.city === city &&
-      (category === "All spots" || d.category === category) &&
-      (!savedOnly || saved.includes(d.id)) &&
-      `${d.name} ${d.neighborhood} ${d.offer}`
-        .toLowerCase()
-        .includes(query.trim().toLowerCase()),
-  );
-}
-export function directionsUrl(deal: Deal) {
-  return venueDirectionsUrl(venues.find((item) => item.id === deal.venueId));
+  const search = query.trim().toLowerCase();
+  return catalog.filter((listing) => {
+    const { venue, id } = listing;
+    const searchable = "offer" in listing ? listing.offer : venue.address;
+    return isVenueVisible(venue) &&
+      venue.city === city &&
+      (category === "All spots" || ("offer" in listing && listing.category === category)) &&
+      (!savedOnly || saved.includes(id)) &&
+      `${venue.name} ${venue.neighborhood} ${searchable ?? ""}`.toLowerCase().includes(search);
+  });
 }

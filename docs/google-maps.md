@@ -29,11 +29,11 @@ The list fallback is the supported no-key/no-Maps-cost preview path. No paid acc
 
 ## Demo location boundary
 
-Every venue has `demoLocation: { lat, lng, kind: 'demo' }` on its venue record. These are invented locations in the selected market, not actual addresses of the fictional venue. Map labels, marker titles, and detail/directions copy identify this explicitly. Do not use these coordinates for a real launch; replace with verified onboarding data and redesign the `kind` contract when genuine venues are introduced. Coordinates are not obtained by guessing addresses or calling a geocoder.
+Every current demo venue has `demoLocation: { lat, lng, kind: 'demo' }`. The positions are invented and used only for preview pins. Future real venues use independently verified coordinates. See [Introducing verified venues](data-model.md#introducing-verified-venues).
 
 ## Directions eligibility
 
-Every current venue has `isDemo: true`. `src/domain/directions.ts` returns no URL for a demo venue, a missing record, missing verification, or invalid coordinates. A future real record must explicitly set `isDemo: false` and supply a separate `verifiedLocation: { lat, lng, verified: true }`; `demoLocation` is never used to build directions. Even mistakenly attaching verification to a demo venue cannot enable directions. No real venue records, external verification workflow, backend, or directions requests have been added. These flags are a local data contract, not a production authorization or verification service, and they do not approve alcoholic promotions.
+`src/domain/directions.ts` uses the same location rule as map pins and additionally requires a real venue. A published real record with an address and valid `verifiedLocation: { lat, lng, verified: true }` can receive a pin and directions. A published real venue without verified coordinates remains list-only. Preview venues never receive directions, even if verified coordinates are mistakenly attached.
 
 ## Architecture-review preview checklist
 
