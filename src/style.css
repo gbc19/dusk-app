@@ -2049,7 +2049,7 @@ footer .logo .brand-wordmark {
   }
 }
 
-.map-intro-mobile {
+.map-status-mobile {
   display: none;
 }
 .directions-unavailable {
@@ -2081,6 +2081,9 @@ footer .logo .brand-wordmark {
   .app-screen-map .launch-note p {
     font-size: 11px;
     line-height: 1.4;
+  }
+  .app-screen-map .launch-note-approval {
+    display: none;
   }
   .screen-map {
     display: flex;
@@ -2125,14 +2128,12 @@ footer .logo .brand-wordmark {
   .screen-map .map-info strong {
     font-size: 15px;
   }
-  .screen-map .map-intro-desktop {
+  .screen-map .map-intro-desktop,
+  .screen-map .map-status-desktop {
     display: none;
   }
-  .screen-map .map-intro-mobile {
-    display: block;
-    font-size: 11px;
-    line-height: 1.4;
-    margin: 4px 0 8px;
+  .screen-map .map-status-mobile {
+    display: inline;
   }
   .screen-map .map-canvas {
     height: clamp(

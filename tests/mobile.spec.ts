@@ -228,11 +228,18 @@ for (const width of [320, 375, 390, 430]) {
     await page.setViewportSize({ width, height: 812 });
     await installMapStub(page);
     await page.goto("/#map");
-    await expect(page.getByText(/4 filtered demo venue pins/)).toBeVisible();
+    await expect(page.locator(".launch-note p")).toHaveText(
+      "21+ · Fictional, non-redeemable previews.",
+      { useInnerText: true },
+    );
+    await expect(page.getByText("4 pins", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Fictional pins · Directions unavailable"),
+    ).toHaveCount(0);
     const canvas = page.locator(".map-canvas");
     const box = (await canvas.boundingBox())!;
     expect(box.y).toBeLessThan(330);
-    expect(box.height).toBeGreaterThanOrEqual(400);
+    expect(box.height).toBe(412);
     const nav = page.getByRole("navigation", { name: "App navigation" });
     expect(box.y + box.height).toBeLessThanOrEqual(
       (await nav.boundingBox())!.y,
@@ -253,6 +260,7 @@ for (const width of [320, 375, 390, 430]) {
     await page.getByRole("button", { name: "Late night", exact: true }).focus();
     await page.keyboard.press("Enter");
     await expect(page.locator(".map-canvas button")).toHaveCount(1);
+    await expect(page.getByText("1 pin", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "All spots", exact: true }).click();
     await expect(page.locator(".map-canvas button")).toHaveCount(4);
     await assertLayout(page);
@@ -260,6 +268,9 @@ for (const width of [320, 375, 390, 430]) {
     await page.locator(".map-canvas button").first().click();
     await expect(page.getByRole("dialog")).toContainText(
       "Demo location — directions unavailable",
+    );
+    await expect(page.getByRole("dialog").locator(".detail-warning")).toHaveText(
+      "Demo only. No offer can be purchased or redeemed. Any launch and promotion require local regulatory approval and venue confirmation. For adults 21+.",
     );
     await expect(page.locator('a[href*="/maps/dir/"]')).toHaveCount(0);
     await page.getByLabel("Close venue details").click();
@@ -282,7 +293,11 @@ test("desktop map keeps its layout and blocks demo directions", async ({
   const canvas = (await page.locator(".map-canvas").boundingBox())!;
   expect(canvas.height).toBe(430);
   await expect(page.locator(".map-intro-desktop")).toBeVisible();
-  await expect(page.locator(".map-intro-mobile")).toBeHidden();
+  await expect(page.locator(".map-status-mobile")).toBeHidden();
+  await expect(page.locator(".launch-note p")).toHaveText(
+    "21+ · Fictional, non-redeemable previews. Launch pending local regulatory approval.",
+    { useInnerText: true },
+  );
   const results = (await page.locator(".results-row").boundingBox())!;
   expect(results.y + results.height).toBeLessThan(canvas.y);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(

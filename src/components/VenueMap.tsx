@@ -156,9 +156,6 @@ export function VenueMap({
             All pins use fictional demo coordinates — not verified venue
             addresses. Select a pin or a venue below for its offer.
           </p>
-          <p className="map-intro-mobile">
-            Fictional pins · Directions unavailable
-          </p>
         </div>
       </div>
       <div
@@ -174,7 +171,17 @@ export function VenueMap({
             ? "Google Maps could not load. Browse the venue list below."
             : status === "loading"
               ? "Loading Google Maps… The venue list is available below."
-              : `${deals.length} filtered demo venue pins. The same venues appear in the list below.`}
+              : (
+                <>
+                  <span className="map-status-desktop">
+                    {deals.length} filtered demo venue pins. The same venues
+                    appear in the list below.
+                  </span>
+                  <span className="map-status-mobile">
+                    {deals.length} {deals.length === 1 ? "pin" : "pins"}
+                  </span>
+                </>
+              )}
       </p>
       {status === "ready" && (
         <div className="geolocation">

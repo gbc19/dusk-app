@@ -227,8 +227,10 @@ export function App() {
         )}
         <div className="launch-note">
           <p>
-            21+ · Fictional, non-redeemable previews. Launch pending local
-            regulatory approval.
+            21+ · Fictional, non-redeemable previews.
+            <span className="launch-note-approval">
+              {" "}Launch pending local regulatory approval.
+            </span>
           </p>
         </div>
         <section
