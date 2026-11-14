@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { App } from "./main";
-import { filterDeals, directionsUrl, deals } from "./data";
+import { filterDeals, deals } from "./data";
 beforeEach(() => vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", ""));
 afterEach(() => {
   cleanup();
@@ -42,15 +42,18 @@ test("city switching and search update displayed venues", () => {
   });
   expect(screen.getByText("No spots here yet.")).toBeInTheDocument();
 });
-test("details prohibit redemption and label directions as demo coordinates", () => {
+test("demo details prohibit redemption and never expose directions", () => {
   render(<App />);
   fireEvent.click(screen.getByText("The Velvet Room"));
   expect(screen.getByRole("dialog")).toHaveTextContent(
     "No offer can be purchased or redeemed",
   );
   expect(
-    screen.getByRole("link", { name: /Directions to demo coordinates/ }),
-  ).toHaveAttribute("href", directionsUrl(deals[0]));
+    screen.getByText("Demo location — directions unavailable"),
+  ).toBeVisible();
+  expect(
+    screen.queryByRole("link", { name: /directions/i }),
+  ).not.toBeInTheDocument();
   fireEvent.click(screen.getByLabelText("Close venue details"));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });

@@ -194,3 +194,105 @@ test("bottom safe-area clearance and desktop navigation", async ({ page }) => {
   await nav.getByRole("link", { name: "Saved", exact: true }).click();
   await expect(page.getByText("No saved spots yet.")).toBeVisible();
 });
+
+// Exercise real DOM/CSS sizing and marker selection without loading Google's service.
+async function installMapStub(page: Page) {
+  await page.route(
+    /\/src\/components\/VenueMap\.tsx(?:\?|$)/,
+    async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace(
+        "import.meta.env.VITE_GOOGLE_MAPS_API_KEY",
+        '"browser-test-only"',
+      );
+      await route.fulfill({ response, body });
+    },
+  );
+  await page.route(/\/src\/maps\/loader\.ts(?:\?|$)/, (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: `
+    export async function loadGoogleMaps(){
+      class Map{constructor(element){this.element=element;element.replaceChildren();}setCenter(){}setZoom(){}fitBounds(){}panTo(){}}
+      class AdvancedMarkerElement{constructor(options){this.content=options.content;this.map=options.map;}set map(value){this._map=value;if(this.content){if(value)value.element.append(this.content);else this.content.remove();}}get map(){return this._map;}}
+      window.google={maps:{Map,ColorScheme:{DARK:'DARK'},LatLngBounds:class{extend(){}},marker:{AdvancedMarkerElement}}};return window.google;
+    }
+  `,
+    }),
+  );
+}
+for (const width of [320, 375, 390, 430]) {
+  test(`mobile map is higher, larger, and safe at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 812 });
+    await installMapStub(page);
+    await page.goto("/#map");
+    await expect(page.getByText(/4 filtered demo venue pins/)).toBeVisible();
+    const canvas = page.locator(".map-canvas");
+    const box = (await canvas.boundingBox())!;
+    expect(box.y).toBeLessThan(330);
+    expect(box.height).toBeGreaterThanOrEqual(400);
+    const nav = page.getByRole("navigation", { name: "App navigation" });
+    expect(box.y + box.height).toBeLessThanOrEqual(
+      (await nav.boundingBox())!.y,
+    );
+    await expect(page.getByLabel("Search spots")).toBeInViewport();
+    const categories = page.getByRole("group", { name: "Filter by category" });
+    const row = await categories
+      .locator("button")
+      .evaluateAll((buttons) =>
+        buttons.map((button) => button.getBoundingClientRect().y),
+      );
+    expect(new Set(row).size).toBe(1);
+    expect(
+      await categories.evaluate(
+        (element) => element.scrollWidth > element.clientWidth,
+      ),
+    ).toBe(true);
+    await page.getByRole("button", { name: "Late night", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".map-canvas button")).toHaveCount(1);
+    await page.getByRole("button", { name: "All spots", exact: true }).click();
+    await expect(page.locator(".map-canvas button")).toHaveCount(4);
+    await assertLayout(page);
+    await page.screenshot({ path: testInfo.outputPath("map-stub.png") });
+    await page.locator(".map-canvas button").first().click();
+    await expect(page.getByRole("dialog")).toContainText(
+      "Demo location — directions unavailable",
+    );
+    await expect(page.locator('a[href*="/maps/dir/"]')).toHaveCount(0);
+    await page.getByLabel("Close venue details").click();
+    await page.getByLabel("Search spots").fill("Velvet");
+    await expect(page.locator(".map-canvas button")).toHaveCount(1);
+    await page.getByLabel("Choose city").selectOption("New York City");
+    await page.getByLabel("Search spots").fill("");
+    await expect(page.locator(".map-canvas button")).toHaveCount(2);
+    await assertLayout(page);
+  });
+}
+
+test("desktop map keeps its layout and blocks demo directions", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installMapStub(page);
+  await page.goto("/#map");
+  await expect(page.getByText(/4 filtered demo venue pins/)).toBeVisible();
+  const canvas = (await page.locator(".map-canvas").boundingBox())!;
+  expect(canvas.height).toBe(430);
+  await expect(page.locator(".map-intro-desktop")).toBeVisible();
+  await expect(page.locator(".map-intro-mobile")).toBeHidden();
+  const results = (await page.locator(".results-row").boundingBox())!;
+  expect(results.y + results.height).toBeLessThan(canvas.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    1280,
+  );
+  await page.locator(".map-canvas button").first().click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Demo location — directions unavailable",
+  );
+  await expect(
+    page.getByRole("dialog").getByRole("link", { name: /directions/i }),
+  ).toHaveCount(0);
+});

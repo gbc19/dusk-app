@@ -2,7 +2,7 @@
 
 ## What the app requests
 
-The optional map uses the Maps JavaScript API and its marker library, with AdvancedMarkerElement and the Google-provided `DEMO_MAP_ID` for development. The key comes from `VITE_GOOGLE_MAPS_API_KEY`. No Maps embed remains; no Places library, Places search, Geocoding, or Directions API requests are made. Venue positions are bundled explicit demo coordinates. Directions links use the public Google Maps URL interface, opened only on a click.
+The optional map uses the Maps JavaScript API and its marker library, with AdvancedMarkerElement and the Google-provided `DEMO_MAP_ID` for development. The key comes from `VITE_GOOGLE_MAPS_API_KEY`. No Maps embed remains; no Places library, Places search, Geocoding, or Directions API requests are made. Venue positions are bundled explicit demo coordinates. Fictional venues never render a directions link. Their details show `Demo location — directions unavailable`. The URL helper is reserved for future explicitly real venues with independently verified coordinates.
 
 Maps initializes on the first visit to the Map destination with a key. Filtering replaces markers and fits the existing map rather than creating new maps. Moving among Discover, Map, and Saved preserves that instance; hidden map markers are removed and restored when Map is active. The Map screen also includes a Saved only filter. Refreshing the page or remounting the app can create another map load. These optimizations reduce unnecessary loads; they do not make Google Maps free. Advanced markers/map IDs use Google's applicable Dynamic Maps billing model. Review current Google Maps Platform pricing and terms before enabling service. Replace `DEMO_MAP_ID` with a project-owned JavaScript map ID before any production release.
 
@@ -30,3 +30,17 @@ The list fallback is the supported no-key/no-Maps-cost preview path. No paid acc
 ## Demo location boundary
 
 Every venue has `demoLocation: { lat, lng, kind: 'demo' }` on its venue record. These are invented locations in the selected market, not actual addresses of the fictional venue. Map labels, marker titles, and detail/directions copy identify this explicitly. Do not use these coordinates for a real launch; replace with verified onboarding data and redesign the `kind` contract when genuine venues are introduced. Coordinates are not obtained by guessing addresses or calling a geocoder.
+
+## Directions eligibility
+
+Every current venue has `isDemo: true`. `src/domain/directions.ts` returns no URL for a demo venue, a missing record, missing verification, or invalid coordinates. A future real record must explicitly set `isDemo: false` and supply a separate `verifiedLocation: { lat, lng, verified: true }`; `demoLocation` is never used to build directions. Even mistakenly attaching verification to a demo venue cannot enable directions. No real venue records, external verification workflow, backend, or directions requests have been added. These flags are a local data contract, not a production authorization or verification service, and they do not approve alcoholic promotions.
+
+## Architecture-review preview checklist
+
+- **Phones (320, 375, 390, 430px):** open Map. Search should be immediately accessible. Scroll the single category row horizontally (and Tab to off-screen filters), select categories, and verify corresponding markers/list entries. A larger map should appear near the top with the bottom bar unobstructed. The results count and Saved only toggle sit below the map. Check that the page itself never scrolls sideways.
+- **With your existing configured key:** drag/pan, zoom, select markers, change markets/search/category, and request location only if desired. Confirm markers and details still work, with saved spots intact. This review does not require or authorize changes to Cloud settings or `.env.local`.
+- **Any fictional marker or card:** open the venue details. Read `Demo location — directions unavailable`; no directions link or external navigation should be offered. The alcohol preview and non-redemption warning remain present.
+- **Without a usable map/key:** confirm the explanatory error and filtered venue list still work. No need to change an existing local key merely to inspect this; the automated browser suite covers this path with a blank test-process key.
+- **Desktop (1280px or wider):** confirm the original search/filter layout and map placement are intact. Search/category/market updates, saved filtering, location opt-in, branding, and footer should behave as before. The directions safety change applies here too.
+
+`npm run test:e2e` tests both the no-key fallback and a stubbed SDK layout/marker path without Google service calls. It does not exercise real map imagery, Google control sizing, Google billing/key restrictions, or real iPhone Safari gestures. Manually review those interactions with the existing configured preview before the architecture review.

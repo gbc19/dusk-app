@@ -1,3 +1,4 @@
+import { venueDirectionsUrl } from "./domain/directions";
 import type { City, Venue } from "./domain/models";
 export type { City } from "./domain/models";
 export type Category =
@@ -18,6 +19,7 @@ export interface Deal {
 export const venues: readonly Venue[] = [
   {
     id: "venue-1",
+    isDemo: true,
     demoLocation: { lat: 39.3543, lng: -74.4335, kind: "demo" },
     name: "The Velvet Room",
     city: "Atlantic City",
@@ -27,6 +29,7 @@ export const venues: readonly Venue[] = [
   },
   {
     id: "venue-2",
+    isDemo: true,
     demoLocation: { lat: 39.36, lng: -74.4269, kind: "demo" },
     name: "Ember & Violet",
     city: "Atlantic City",
@@ -36,6 +39,7 @@ export const venues: readonly Venue[] = [
   },
   {
     id: "venue-3",
+    isDemo: true,
     demoLocation: { lat: 39.3784, lng: -74.427, kind: "demo" },
     name: "Low Tide Beer Hall",
     city: "Atlantic City",
@@ -45,6 +49,7 @@ export const venues: readonly Venue[] = [
   },
   {
     id: "venue-4",
+    isDemo: true,
     demoLocation: { lat: 39.3564, lng: -74.4431, kind: "demo" },
     name: "Midnight Standard",
     city: "Atlantic City",
@@ -54,6 +59,7 @@ export const venues: readonly Venue[] = [
   },
   {
     id: "venue-5",
+    isDemo: true,
     demoLocation: { lat: 40.7184, lng: -73.9875, kind: "demo" },
     name: "Juniper & Co.",
     city: "New York City",
@@ -63,6 +69,7 @@ export const venues: readonly Venue[] = [
   },
   {
     id: "venue-6",
+    isDemo: true,
     demoLocation: { lat: 40.7143, lng: -73.9614, kind: "demo" },
     name: "The Night Shift",
     city: "New York City",
@@ -168,6 +175,5 @@ export function filterDeals(
   );
 }
 export function directionsUrl(deal: Deal) {
-  const venue = venues.find((item) => item.id === deal.venueId)!;
-  return `https://www.google.com/maps/dir/?api=1&destination=${venue.demoLocation.lat},${venue.demoLocation.lng}`;
+  return venueDirectionsUrl(venues.find((item) => item.id === deal.venueId));
 }

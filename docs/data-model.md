@@ -8,13 +8,13 @@ This is a TypeScript design contract, not a database migration. Only fictional v
 
 ## Core entities
 
-| Entity               | Fields                                                                                         | Relationship / purpose                                                                                  |
-| -------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Venue                | `id`, `name`, `city`, `neighborhood`, `timeZone`, `status`, `demoLocation`                     | Stable venue identity shared by offers and later experiences. Current records are `preview`.            |
-| Deal                 | Existing numeric `id`, `venueId`, category, offer copy, description, display hours, image, tag | Many offers can reference one venue. Venue name and location are joined into the current flat UI model. |
-| Customer             | `id`, `displayName`, `status`                                                                  | Minimal private customer profile; no accounts are created in this version.                              |
-| Staff                | `id`, `displayName`, `status`                                                                  | Minimal private staff profile, separate from a customer's public-facing identity.                       |
-| VenueStaffAssignment | `venueId`, `staffId`, `role`, `status`                                                         | Many-to-many venue membership; `manager` or `staff` role scoped to one venue.                           |
+| Entity               | Fields                                                                                                            | Relationship / purpose                                                                                  |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Venue                | `id`, `name`, `city`, `neighborhood`, `timeZone`, `status`, `demoLocation`, `isDemo`, optional `verifiedLocation` | Stable venue identity shared by offers and later experiences. Current records are `preview`.            |
+| Deal                 | Existing numeric `id`, `venueId`, category, offer copy, description, display hours, image, tag                    | Many offers can reference one venue. Venue name and location are joined into the current flat UI model. |
+| Customer             | `id`, `displayName`, `status`                                                                                     | Minimal private customer profile; no accounts are created in this version.                              |
+| Staff                | `id`, `displayName`, `status`                                                                                     | Minimal private staff profile, separate from a customer's public-facing identity.                       |
+| VenueStaffAssignment | `venueId`, `staffId`, `role`, `status`                                                                            | Many-to-many venue membership; `manager` or `staff` role scoped to one venue.                           |
 
 IDs are opaque, stable strings except for existing numeric deal IDs, retained to preserve local saved spots. Do not derive IDs from names, emails, or array positions in production. Fixtures use explicit IDs. Do not embed customer lists, staff lists, reservations, or event arrays inside venue records.
 
@@ -42,7 +42,7 @@ For future booking, validate time order, positive party size, table capacity, ev
 - Keep venue discovery data separate from private customer and staff records. Do not ship private records in frontend bundles.
 - Do not collect email, phone, birth date, identity documents, payment details, or guest names in anticipation of a future feature. Define purpose, access, and retention when a feature needs them. Profile existence is not proof of age or verification.
 - Keep current local saved spots anonymous. If accounts are added, design an explicit opt-in migration rather than silently linking device history to a person.
-- Add verified street addresses/coordinates with real venue onboarding; explicitly labeled fictional demo coordinates are used for preview markers and directions. No geocoding is performed.
+- Add verified street addresses/coordinates with real venue onboarding; explicitly labeled fictional demo coordinates are used for preview markers only. Directions require an explicitly real venue and a separate verified location; demo pins never qualify. No geocoding is performed.
 - No ORM, hosted database, authentication service, booking vendor, billing system, analytics, or new dependency is needed for these contracts.
 - Do not build a generic metadata bag, permissions engine, event bus, repository abstraction, or speculative schema migrations. Add concrete fields and constraints incrementally.
 

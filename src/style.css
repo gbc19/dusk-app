@@ -2048,3 +2048,102 @@ footer .logo .brand-wordmark {
     display: none;
   }
 }
+
+.map-intro-mobile {
+  display: none;
+}
+.directions-unavailable {
+  font-size: 13px;
+  color: #d2c2de;
+  line-height: 1.6;
+}
+@media (max-width: 767px) {
+  /* The filter strip scrolls locally; the page itself must not overflow. */
+  .categories {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    gap: 7px;
+    padding: 4px 2px;
+    scroll-padding: 4px;
+    scrollbar-width: thin;
+  }
+  .categories button {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+  .app-screen-map .launch-note {
+    padding: 6px 0;
+    border-bottom: 0;
+  }
+  .app-screen-map .launch-note p {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .screen-map {
+    display: flex;
+    flex-direction: column;
+    margin-top: 4px;
+  }
+  .screen-map .section-heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .screen-map .tools {
+    order: 0;
+    gap: 5px;
+    padding-bottom: 6px;
+    border-bottom: 0;
+    min-width: 0;
+  }
+  .screen-map .map-slot {
+    order: 1;
+    min-width: 0;
+  }
+  .screen-map .results-row {
+    order: 2;
+    margin: 6px 0 10px;
+  }
+  .screen-map .cards {
+    order: 3;
+  }
+  .screen-map .empty {
+    order: 4;
+  }
+  .screen-map .map-panel {
+    padding: 10px;
+    margin: 0;
+  }
+  .screen-map .map-info strong {
+    font-size: 15px;
+  }
+  .screen-map .map-intro-desktop {
+    display: none;
+  }
+  .screen-map .map-intro-mobile {
+    display: block;
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 4px 0 8px;
+  }
+  .screen-map .map-canvas {
+    height: clamp(
+      280px,
+      calc(100svh - 400px - var(--top-safe-area, 0px)),
+      560px
+    );
+    min-width: 0;
+  }
+  .screen-map .map-panel > p[role="status"] {
+    font-size: 11px;
+    margin: 8px 0 0;
+  }
+}

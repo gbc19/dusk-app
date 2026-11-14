@@ -76,11 +76,11 @@ test("markers follow city, search, category and saved filters and open the offer
   fireEvent.click(marker.content!);
   expect(screen.getByRole("dialog")).toHaveTextContent("$1 house drinks");
   expect(
-    screen.getByRole("link", { name: /Directions to demo coordinates/ }),
-  ).toHaveAttribute(
-    "href",
-    expect.stringContaining("destination=39.3543,-74.4335"),
-  );
+    screen.getByText("Demo location — directions unavailable"),
+  ).toBeVisible();
+  expect(
+    screen.queryByRole("link", { name: /directions/i }),
+  ).not.toBeInTheDocument();
   fireEvent.click(screen.getByLabelText("Close venue details"));
   fireEvent.click(screen.getByRole("button", { name: "$1 drinks" }));
   expect(active()).toHaveLength(1);

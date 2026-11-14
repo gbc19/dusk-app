@@ -87,6 +87,7 @@ export function App() {
     ["Beer", Beer],
     ["Late night", Moon],
   ];
+  const selectedDirections = selected ? directionsUrl(selected) : null;
   return (
     <>
       <header className="header">
@@ -165,7 +166,7 @@ export function App() {
           </a>
         ))}
       </nav>
-      <main>
+      <main className={`app-screen-${screen}`}>
         <section className="hero" hidden={screen !== "discover"}>
           <div className="hero-copy">
             <div className="eyebrow">
@@ -295,7 +296,7 @@ export function App() {
             )}
           </div>
           {mapOpened && (
-            <div hidden={screen !== "map"}>
+            <div className="map-slot" hidden={screen !== "map"}>
               <VenueMap
                 active={screen === "map"}
                 city={city}
@@ -477,14 +478,20 @@ export function App() {
               Fictional demo coordinates only — this is not a verified venue
               address.
             </p>
-            <a
-              className="directions-link"
-              href={directionsUrl(selected)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Directions to demo coordinates <ArrowUpRight size={16} />
-            </a>
+            {selectedDirections ? (
+              <a
+                className="directions-link"
+                href={selectedDirections}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Directions <ArrowUpRight size={16} />
+              </a>
+            ) : (
+              <p className="directions-unavailable">
+                Demo location — directions unavailable
+              </p>
+            )}
             <button
               className="primary"
               onClick={() => toggleSaved(selected.id)}

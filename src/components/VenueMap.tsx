@@ -152,9 +152,12 @@ export function VenueMap({
       <div className="map-info">
         <div>
           <strong>Demo venue map</strong>
-          <p>
+          <p className="map-intro-desktop">
             All pins use fictional demo coordinates — not verified venue
             addresses. Select a pin or a venue below for its offer.
+          </p>
+          <p className="map-intro-mobile">
+            Fictional pins · Directions unavailable
           </p>
         </div>
       </div>

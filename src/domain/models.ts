@@ -9,6 +9,10 @@ export interface Venue {
   name: string;
   city: City;
   neighborhood: string;
+  /** Explicit venue identity; existing preview venues must remain demo-only. */
+  isDemo: boolean;
+  /** Reserved for independently verified real venue data, never copied from demo pins. */
+  verifiedLocation?: { lat: number; lng: number; verified: true };
   /** Fictional map position, never a verified address or real promotion location. */
   demoLocation: { lat: number; lng: number; kind: "demo" };
   /** IANA time zone, for future local event and reservation times. */
