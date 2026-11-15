@@ -31,15 +31,25 @@ test("published venues can be listed without a pin; unpublished venues stay hidd
     verifiedLocation: { lat: 40, lng: -74, verified: true },
   };
   const catalog = realVenueListings([
-    real, mapped, { ...real, id: "draft", status: "draft" },
-    { ...real, id: "verified", status: "verified" },
-    { ...mapped, id: "suspended", status: "suspended" }, venues[0],
+    real, mapped,
   ]);
   expect(filterDeals("Atlantic City", "All spots", "", false, [], catalog).map(({ id }) => id))
     .toEqual([real.id, mapped.id]);
   expect(venueMapPosition(real)).toBeNull();
   expect(venueMapPosition(mapped)).toBe(mapped.verifiedLocation);
   expect(venueMapPosition({ ...mapped, status: "suspended" })).toBeNull();
+});
+
+test.each([
+  null, {}, [null], [{ ...real, id: "" }], [real, real],
+  [venues[0]], [{ ...real, status: "suspended" }], [{ ...real, status: "active" }],
+  [{ ...real, address: "" }], [{ ...real, timeZone: 123 }],
+  [{ ...real, verifiedLocation: { lat: 91, lng: -74, verified: true } }],
+  [{ ...real, verifiedLocation: { lat: 40, lng: -74, verified: false } }],
+  [{ ...real, verifiedLocation: { lat: 40, lng: -74, verified: true, source: "private" } }],
+  [{ ...real, verification: review }], [{ ...real, venueId: "unresolved" }],
+].map((input) => ({ input })))("invalid public input fails closed %#", ({ input }) => {
+  expect(realVenueListings(input)).toEqual([]);
 });
 
 test("validation rejects bad IDs, references, publication fields and location claims", () => {
@@ -72,4 +82,6 @@ test("public export rejects demo and unpublished rows and allowlists fields with
   expect(() => exportPublicCatalog([mapped], [review])).toThrow("coordinate verification source");
   expect(exportPublicCatalog([mapped], [{ ...review, coordinateSource: "Private evidence" }]))
     .toEqual([mapped]);
+  expect(realVenueListings(exportPublicCatalog([row], [review])))
+    .toEqual([{ id: real.id, venue: real }]);
 });

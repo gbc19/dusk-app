@@ -78,12 +78,10 @@ test("real cards, pins and directions share the published venue record", async (
   render(<App publicCatalog={[
     venue,
     { ...venue, id: "test-list", name: "List-only test venue", verifiedLocation: undefined },
-    { ...venue, id: "test-hidden", name: "Suspended test venue", status: "suspended" },
   ]} />);
   fireEvent.click(screen.getByRole("link", { name: "Map" }));
   await waitFor(() => expect(active()).toHaveLength(1));
   expect(active()[0].position).toMatchObject(location);
-  expect(screen.queryByText("Suspended test venue")).not.toBeInTheDocument();
   expect(screen.queryByText("NON-REDEEMABLE PREVIEW")).not.toBeInTheDocument();
   fireEvent.click(active()[0].content!);
   expect(screen.getByRole("dialog", { name: venue.name })).toHaveTextContent(venue.address!);

@@ -26,7 +26,6 @@ import {
   type SavedId,
 } from "./data";
 import { venueDirectionsUrl } from "./domain/directions";
-import type { RealVenue } from "./domain/models";
 import { VenueMap } from "./components/VenueMap";
 import { VenueImage } from "./components/VenueImage";
 import { useScreen, type Screen } from "./navigation/useScreen";
@@ -39,12 +38,13 @@ function readSaved(key: string): unknown {
     return [];
   }
 }
-export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } = {}) {
+export function App({ publicCatalog }: { publicCatalog?: unknown } = {}) {
   const { screen, navigate } = useScreen();
-  const savedKey = publicCatalog ? "dusk-saved-venues" : "dusk-saved";
+  const realMode = publicCatalog !== undefined;
+  const savedKey = realMode ? "dusk-saved-venues" : "dusk-saved";
   const listings = useMemo(
-    () => publicCatalog ? realVenueListings(publicCatalog) : deals,
-    [publicCatalog],
+    () => realMode ? realVenueListings(publicCatalog) : deals,
+    [publicCatalog, realMode],
   );
   const [city, setCity] = useState<City>("Atlantic City"),
     [category, setCategory] = useState<Category>("All spots"),
@@ -179,7 +179,7 @@ export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } 
         ))}
       </nav>
       <main className={`app-screen-${screen}`}>
-        <section className="hero" hidden={screen !== "discover" || !!publicCatalog}>
+        <section className="hero" hidden={screen !== "discover" || realMode}>
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="dot" /> GOOD NIGHTS START WITH A GOOD FIND
@@ -229,7 +229,7 @@ export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } 
             </div>
           </div>
         </section>
-        {screen === "discover" && !publicCatalog && (
+        {screen === "discover" && !realMode && (
           <section className="mobile-intro" aria-label="DUSK deals">
             <span className="eyebrow">YOUR CITY. AFTER DARK.</span>
             <h1>
@@ -237,7 +237,7 @@ export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } 
             </h1>
           </section>
         )}
-        {!publicCatalog && (
+        {!realMode && (
           <div className="launch-note">
             <p>
               21+ · Fictional, non-redeemable previews.
@@ -263,13 +263,13 @@ export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } 
                     : "Find your kind of night."}
               </h2>
               <span className="city-caption">
-                <MapPin size={15} /> {city}
-                {!publicCatalog && <> <span> / </span> Launch preview</>}
+                <MapPin size={15} /> {city}{" "}
+                <span> / </span> {realMode ? "Verified venue discovery" : "Launch preview"}
               </span>
             </div>
           </div>
           <div className="tools">
-            {!publicCatalog && <div
+            {!realMode && <div
               className="categories"
               role="group"
               aria-label="Filter by category"
@@ -316,7 +316,7 @@ export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } 
             <div className="map-slot" hidden={screen !== "map"}>
               <VenueMap
                 active={screen === "map"}
-                preview={!publicCatalog}
+                preview={!realMode}
                 city={city}
                 deals={visible}
                 onSelect={setSelected}
@@ -406,7 +406,9 @@ export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } 
               <p>
                 {savedOnly
                   ? saved.length === 0
-                    ? "Tap the bookmark on any deal to keep it here for your next night out."
+                    ? realMode
+                      ? "Open a venue and choose Save this spot to find it here later."
+                      : "Tap the bookmark on any deal to keep it here for your next night out."
                     : "Your saved spots may be in another city or hidden by the current filters."
                   : "Try another category or a different search."}
               </p>
@@ -444,7 +446,9 @@ export function App({ publicCatalog }: { publicCatalog?: readonly RealVenue[] } 
         </a>
         <p>Don't Waste The Night.</p>
         <small>
-          21+ · Enjoy responsibly. Demo only; offers are not redeemable.
+          {realMode
+            ? "21+ · Enjoy responsibly. Verified venue discovery."
+            : "21+ · Enjoy responsibly. Demo only; offers are not redeemable."}
         </small>
         <span>© 2015-2026 Dusk App LLC</span>
       </footer>

@@ -100,6 +100,44 @@ export function validateCatalog(
   return errors;
 }
 
+function publicVenue({ id, name, city, neighborhood, timeZone, category, address, verifiedLocation }: Venue): RealVenue {
+  return {
+    id, name, city, neighborhood, timeZone, category, address,
+    isDemo: false, status: "published",
+    ...(verifiedLocation && {
+      verifiedLocation: { lat: verifiedLocation.lat, lng: verifiedLocation.lng, verified: true },
+    }),
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" &&
+    Object.getPrototypeOf(value) === Object.prototype;
+}
+
+/** Accept only a complete, valid public export. A bad row invalidates the import. */
+export function importPublicCatalog(input: unknown): RealVenue[] {
+  if (!Array.isArray(input)) return [];
+  const venues: Venue[] = [];
+  for (const row of input) {
+    if (!isRecord(row)) return [];
+    const location = row.verifiedLocation;
+    if (location !== undefined && !isRecord(location)) return [];
+    if (row.isDemo !== false || row.status !== "published") return [];
+    // Check public keys against the same projection used by the private exporter.
+    const venue = row as unknown as RealVenue;
+    const allowed = publicVenue(venue);
+    if (Object.keys(row).some(
+          (key) => key !== "verifiedLocation" && !Object.hasOwn(allowed, key),
+        ) ||
+        (isRecord(location) && Object.keys(location).some(
+          (key) => !Object.hasOwn(allowed.verifiedLocation!, key),
+        ))) return [];
+    venues.push(venue);
+  }
+  return validateCatalog(venues, [], "public").length ? [] : venues.map(publicVenue);
+}
+
 /** Call at the private publication boundary. Only allowlisted fields leave it. */
 export function exportPublicCatalog(
   venues: readonly Venue[],
@@ -118,11 +156,5 @@ export function exportPublicCatalog(
     }
   }
   if (errors.length) throw new Error(errors.join("\n"));
-  return venues.map(({ id, name, city, neighborhood, timeZone, category, address, verifiedLocation }) => ({
-    id, name, city, neighborhood, timeZone, category, address,
-    isDemo: false, status: "published",
-    ...(verifiedLocation && {
-      verifiedLocation: { lat: verifiedLocation.lat, lng: verifiedLocation.lng, verified: true },
-    }),
-  }));
+  return venues.map(publicVenue);
 }

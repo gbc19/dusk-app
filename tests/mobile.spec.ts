@@ -221,6 +221,76 @@ async function installMapStub(page: Page) {
     }),
   );
 }
+
+const realVenue = {
+  id: "synthetic-real", name: "Synthetic venue", city: "Atlantic City",
+  neighborhood: "Test district", timeZone: "America/New_York", category: "bar",
+  isDemo: false, status: "published", address: "100 Test Street",
+};
+
+async function openPublicCatalog(page: Page, input: unknown) {
+  await page.route("**/", async (route) => {
+    if (!route.request().isNavigationRequest()) return route.continue();
+    const response = await route.fetch();
+    const catalog = JSON.stringify(input).replaceAll("&", "&amp;").replaceAll('"', "&quot;")
+      .replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    const body = (await response.text())
+      .replace('id="root"', `id="catalog-test-root" data-catalog="${catalog}"`)
+      .replace("/src/main.tsx", "/tests/fixtures/catalog-entry.tsx");
+    await route.fulfill({ response, body });
+  });
+  await page.goto("/");
+}
+
+test("real venues can be saved, and a list-only venue has no pin or directions", async ({ page }) => {
+  await installMapStub(page);
+  await openPublicCatalog(page, [realVenue, {
+    ...realVenue, id: "synthetic-mapped", name: "Mapped venue",
+    verifiedLocation: { lat: 39.4, lng: -74.4, verified: true },
+  }]);
+  const nav = page.getByRole("navigation", { name: "App navigation" });
+  await expect(page.locator("footer small")).toContainText("Verified venue discovery.");
+  await expect(page.locator("footer > p")).toHaveText("Don't Waste The Night.");
+  await expect(page.locator("footer > span")).toHaveText("© 2015-2026 Dusk App LLC");
+  await nav.getByRole("link", { name: "Saved" }).click();
+  await expect(page.getByText("Open a venue and choose Save this spot to find it here later.")).toBeVisible();
+  await nav.getByRole("link", { name: "Discover" }).click();
+  await page.getByRole("button", { name: realVenue.name }).click();
+  const detail = page.getByRole("dialog");
+  await expect(detail).toContainText(realVenue.address);
+  await expect(detail.getByRole("link", { name: "Directions" })).toHaveCount(0);
+  await detail.getByRole("button", { name: "Save this spot" }).click();
+  await detail.getByRole("button", { name: "Close venue details" }).click();
+  await nav.getByRole("link", { name: "Saved" }).click();
+  await expect(page.locator(".card")).toHaveText(/Synthetic venue/);
+  await page.reload();
+  await expect(page.locator(".card")).toHaveText(/Synthetic venue/);
+  await nav.getByRole("link", { name: "Map" }).click();
+  await expect(page.locator(".map-canvas button")).toHaveCount(1);
+  await expect(page.locator(".map-canvas").getByRole("button", { name: /Mapped venue/ })).toBeVisible();
+});
+
+for (const [label, row] of [
+  ["malformed", { ...realVenue, address: "" }],
+  ["unpublished", { ...realVenue, status: "draft" }],
+  ["demo", { ...realVenue, isDemo: true, status: "preview" }],
+] as const) {
+  test(`real mode fails closed for a ${label} catalog row`, async ({ page }) => {
+    await openPublicCatalog(page, [{ ...realVenue, id: "valid" }, row]);
+    await expect(page.locator("footer small")).toContainText("Verified venue discovery.");
+    await expect(page.getByText("No spots here yet.")).toBeVisible();
+    await expect(page.locator(".card")).toHaveCount(0);
+    await expect(page.locator(".mobile-intro")).toHaveCount(0);
+  });
+}
+
+test("demo copy and existing saved spots stay available", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("dusk-saved", "[1]"));
+  await page.goto("/#saved");
+  await expect(page.locator(".card")).toHaveText(/The Velvet Room/);
+  await expect(page.locator("footer small")).toContainText("Demo only; offers are not redeemable.");
+});
+
 for (const width of [320, 375, 390, 430]) {
   test(`mobile map is higher, larger, and safe at ${width}px`, async ({
     page,

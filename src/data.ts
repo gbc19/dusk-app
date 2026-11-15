@@ -1,5 +1,5 @@
-import { isVenueVisible, validateCatalog } from "./domain/catalog";
-import type { City, DemoVenue, RealVenue, Venue } from "./domain/models";
+import { importPublicCatalog, isVenueVisible, validateCatalog } from "./domain/catalog";
+import type { City, DemoVenue, RealVenue } from "./domain/models";
 export type { City } from "./domain/models";
 export type Category =
   "All spots" | "$1 drinks" | "Cocktails" | "Beer" | "Late night";
@@ -162,12 +162,8 @@ export const deals: Deal[] = offers.map(({ venueId, ...offer }) => {
   return { ...offer, venue };
 });
 
-export function realVenueListings(catalog: readonly Venue[]): Listing[] {
-  return catalog.flatMap((venue) =>
-    !venue.isDemo && isVenueVisible(venue)
-      ? [{ id: venue.id, venue }]
-      : [],
-  );
+export function realVenueListings(catalog: unknown): Listing[] {
+  return importPublicCatalog(catalog).map((venue) => ({ id: venue.id, venue }));
 }
 
 export function knownSavedIds(value: unknown, listings: readonly Listing[] = deals): SavedId[] {
