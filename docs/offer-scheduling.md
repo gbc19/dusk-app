@@ -12,11 +12,13 @@ A future real offer starts as a draft. Review the exact revision, venue, market,
 
 ## Calendar rules
 
-- `matchesOfferSchedule` evaluates an explicit instant in the venue's IANA zone. Local dates use `YYYY-MM-DD` and times use 24-hour `HH:mm`. The first date and each window's start are inclusive. The final date and each window's end are exclusive.
+- `matchesOfferSchedule` evaluates an explicit instant in the venue's IANA zone. Local dates use `YYYY-MM-DD` and times use 24-hour `HH:mm`. The local date must satisfy `startsOn <= date < endsBefore` before any window is considered. Window starts are inclusive and window ends are exclusive.
 - A window ending earlier than it starts runs overnight and belongs to the weekday it starts on. Equal start and end times are invalid. An overnight tail cannot extend outside the offer date range.
 - Date exceptions replace windows **starting** on that date. An empty exception cancels those starts, including their next-day tails. It does not cancel a tail that started on the previous date.
 - The clock uses local wall time. Spring-forward minutes that do not exist never match. Both fall-back occurrences of a repeated minute can match. This phase evaluates instants and does not define inventory accounting across repeated hours.
 - `isOfferScheduled` adds publication and approval-state gates to the calendar calculation. Neither function determines legal authorization, eligibility, stock availability, or redeemability.
+
+For a Friday `22:00–02:00` window, Saturday at `00:00` still matches if Saturday is inside the offer period. A Saturday closure exception cancels Saturday starts and leaves Friday's tail eligible until `02:00`. If Saturday is `endsBefore`, Friday's window stops matching at local midnight even though its usual end is later. Likewise, the first date can match a window starting at midnight but cannot inherit a window from before `startsOn`.
 
 ## Future claim and redemption concept
 

@@ -25,13 +25,25 @@ const offer = {
 test.each([
   ["2026-01-03T02:59:59.999Z", false],
   ["2026-01-03T03:00:00Z", true],
+  ["2026-01-03T04:59:59.999Z", true],
+  ["2026-01-03T05:00:00Z", true],
   ["2026-01-03T06:59:59.999Z", true],
   ["2026-01-03T07:00:00Z", false],
   ["2026-01-04T03:00:00Z", false],
   ["2026-01-10T04:59:59.999Z", true],
   ["2026-01-10T05:00:00Z", false],
+  ["2026-01-10T05:30:00Z", false],
 ] as const)("overnight schedule at %s is %s", (instant, expected) => {
   expect(isOfferScheduled(offer, new Date(instant))).toBe(expected);
+});
+
+test("a window can start at local midnight on startsOn", () => {
+  const midnight = {
+    ...schedule,
+    weekly: [{ day: "Fri", start: "00:00", end: "00:30" }],
+  } satisfies OfferSchedule;
+  expect(matchesOfferSchedule(midnight, new Date("2026-01-02T04:59:59.999Z"))).toBe(false);
+  expect(matchesOfferSchedule(midnight, new Date("2026-01-02T05:00:00Z"))).toBe(true);
 });
 
 test("the first date cannot inherit an overnight window and exceptions replace their service date", () => {
@@ -44,6 +56,17 @@ test("the first date cannot inherit an overnight window and exceptions replace t
   expect(matchesOfferSchedule(exceptions, new Date("2026-01-03T06:00:00Z"))).toBe(false);
   expect(matchesOfferSchedule(exceptions, new Date("2026-01-04T23:00:00Z"))).toBe(true);
   expect(matchesOfferSchedule(exceptions, new Date("2026-01-05T01:00:00Z"))).toBe(false);
+});
+
+test("a closed service date preserves the previous day's overnight tail", () => {
+  const closedSaturday = {
+    ...schedule,
+    weekly: [...schedule.weekly, { day: "Sat", start: "18:00", end: "20:00" }],
+    exceptions: { "2026-01-03": [] },
+  } satisfies OfferSchedule;
+  expect(matchesOfferSchedule(closedSaturday, new Date("2026-01-03T05:00:00Z"))).toBe(true);
+  expect(matchesOfferSchedule(closedSaturday, new Date("2026-01-03T07:00:00Z"))).toBe(false);
+  expect(matchesOfferSchedule(closedSaturday, new Date("2026-01-03T23:00:00Z"))).toBe(false);
 });
 
 test("spring-forward skips missing minutes; fall-back repeats both matching instants", () => {
@@ -66,6 +89,19 @@ test("calendar match does not bypass draft, suspension, or pending or revoked ap
   expect(isOfferScheduled({ ...offer, publication: "suspended" }, instant)).toBe(false);
   expect(isOfferScheduled({ ...offer, approval: "pending" }, instant)).toBe(false);
   expect(isOfferScheduled({ ...offer, approval: "revoked" }, instant)).toBe(false);
+});
+
+test("overnight tails follow the local clock through both DST transitions", () => {
+  const overnight = {
+    ...schedule,
+    endsBefore: "2026-12-01",
+    weekly: [{ day: "Sat", start: "22:00", end: "02:00" }],
+  } satisfies OfferSchedule;
+  expect(matchesOfferSchedule(overnight, new Date("2026-03-08T06:59:59.999Z"))).toBe(true);
+  expect(matchesOfferSchedule(overnight, new Date("2026-03-08T07:00:00Z"))).toBe(false);
+  expect(matchesOfferSchedule(overnight, new Date("2026-11-01T05:30:00Z"))).toBe(true);
+  expect(matchesOfferSchedule(overnight, new Date("2026-11-01T06:30:00Z"))).toBe(true);
+  expect(matchesOfferSchedule(overnight, new Date("2026-11-01T07:00:00Z"))).toBe(false);
 });
 
 test("validation rejects invalid data, duplicate IDs, and venue mismatches", () => {
