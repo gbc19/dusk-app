@@ -1,0 +1,28 @@
+# Capacitor feasibility for DUSK
+
+**Recommendation:** Package the current fictional preview for local device installs first. Start with an Android debug build on the existing Windows machine and use a Mac with Xcode for a directly installed iPhone build. Keep the venue list usable when Maps cannot load. Defer paid distribution accounts until remote testers need them.
+
+## What can be reused
+
+The React/Vite app emits static files to `dist`. Discover, Map, and Saved use hash navigation, and saves are device-local. Capacitor can bundle those files in iOS and Android shells using `webDir: "dist"`. A native build on each platform gets its own storage, so existing browser saves do not transfer. The current preview runs without a backend. Its fixtures still show Atlantic City and New York City. Las Vegas is the intended market, with catalog content to be handled separately.
+
+## Next implementation step
+
+1. Use a separate, reviewable prototype change. Choose founder-owned app identifiers and a Capacitor release supported by both machines. Add only the Capacitor runtime, CLI, and platform packages. Configure the web directory, build with `npm run build`, add the native platforms, and sync the bundle after each web build. Keep the existing Vite web build and browser tests.
+2. On Windows, install Android Studio and a compatible SDK/JDK for the chosen Capacitor release. Build and install a debug APK via Android Studio or ADB on a USB-debugging device. The debug build uses local debug signing. For a Play test track later, build a signed Android App Bundle and use Play App Signing with a protected upload key.
+3. On a Mac, use compatible macOS and Xcode with the SDK and command-line tools required by that Capacitor release. Select a signing team, unique bundle ID, and a connected iPhone for an Xcode device run. A free Apple Account Personal Team supports local testing with provisioning that expires after seven days. TestFlight requires Apple Developer Program membership and an App Store Connect archive upload. External tester distribution can require beta review.
+4. Run the [physical-device checklist](google-maps.md#physical-device-checklist) in the wrappers. Verify launch, safe areas and keyboard, offline venue list, filtering, modal open/close, saves across restarts, Android Back and iOS navigation, rotation, and a clean unavailable-map state. Use these results to scope a follow-up for platform-specific fixes before inviting remote testers.
+
+Check exact OS, Xcode, Android SDK/JDK, and Node requirements against the chosen Capacitor release at implementation time. [Capacitor install guide](https://capacitorjs.com/docs/getting-started) · [Native environment setup](https://capacitorjs.com/docs/getting-started/environment-setup) · [Apple device testing and provisioning](https://developer.apple.com/help/account/basics/about-your-developer-account/) · [TestFlight](https://developer.apple.com/testflight/)
+
+## Risks and store blockers
+
+| Area | What to verify or resolve |
+| --- | --- |
+| Maps | The existing JavaScript key uses website referrer restrictions. A bundled WebView might omit the referrer or use a local origin the key cannot authorize. Keep restrictions intact. For the first installable build, use the existing list fallback and, if needed during an investor demo, show live Maps separately in an already-authorized HTTPS browser preview. Evaluate an officially supported native SDK and separately platform-restricted keys only if live Maps inside the wrapper is essential. [Google Maps key guidance](https://developers.google.com/maps/api-security-best-practices) |
+| Location | Test the actual OS permission prompt and denied/unavailable paths. Request foreground location only if it works with the chosen WebView or a later plugin. Add the platform permission descriptions and declarations that the chosen API requires. Reflect optional location use and third-party Maps data transfer in privacy disclosures. [Capacitor iOS configuration](https://capacitorjs.com/docs/ios/configuration) |
+| Native usability | Verify safe-area CSS with the system bars on each platform, viewport and keyboard behavior, hash back history, and external link routing. Add a narrowly scoped platform handler only if testing finds a gap. |
+| Apple distribution | Membership currently starts at US$99/year. Prepare app metadata, screenshots, privacy disclosures and age rating. Review minimum functionality for a website wrapper and the policy on encouraging excessive alcohol consumption. A fictional discount label is not a guarantee of acceptance. [Apple membership](https://developer.apple.com/programs/) · [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) |
+| Android distribution | Play Console registration is currently US$25 one time. Before submission, confirm identity, signing, target SDK, Data safety, content rating, and current testing rules. Internal testing can be used for a small group. New personal accounts subject to the production-access rule need at least 12 opted-in closed testers for 14 continuous days. [Play Console registration](https://support.google.com/googleplay/android-developer/answer/6112435?hl=en) · [Testing requirements](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en) · [Developer program policy](https://support.google.com/googleplay/android-developer/answer/18265346) |
+
+Local device installs avoid store fees if compatible machines and phones are already available. The iPhone build still needs Mac access and periodic re-signing for Personal Team use. For remote testing, budget for the applicable accounts and signing setup. This review did not build or install a native app.

@@ -35,12 +35,16 @@ Every current demo venue has `demoLocation: { lat, lng, kind: 'demo' }`. The pos
 
 `src/domain/directions.ts` uses the same location rule as map pins and additionally requires a real venue. A published real record with an address and valid `verifiedLocation: { lat, lng, verified: true }` can receive a pin and directions. A published real venue without verified coordinates remains list-only. Preview venues never receive directions, even if verified coordinates are mistakenly attached.
 
-## Architecture-review preview checklist
+## Physical-device checklist
 
-- **Phones (320, 375, 390, 430px):** open Map. Search should be immediately accessible. Scroll the single category row horizontally (and Tab to off-screen filters), select categories, and verify corresponding markers/list entries. A larger map should appear near the top with the bottom bar unobstructed. The results count and Saved only toggle sit below the map. Check that the page itself never scrolls sideways.
-- **With your existing configured key:** drag/pan, zoom, select markers, change markets/search/category, and request location only if desired. Confirm markers and details still work, with saved spots intact. This review does not require or authorize changes to Cloud settings or `.env.local`.
-- **Any fictional marker or card:** open the venue details. Read `Demo location — directions unavailable`; no directions link or external navigation should be offered. The alcohol preview and non-redemption warning remain present.
-- **Without a usable map/key:** confirm the explanatory error and filtered venue list still work. No need to change an existing local key merely to inspect this; the automated browser suite covers this path with a blank test-process key.
-- **Desktop (1280px or wider):** confirm the original search/filter layout and map placement are intact. Search/category/market updates, saved filtering, location opt-in, branding, and footer should behave as before. The directions safety change applies here too.
+Run once in **Safari on an iPhone** and once in **Chrome on an Android phone**. Record device, OS/browser version, commit, orientation, and results. Use an existing private trusted HTTPS preview on an origin already allowed by the development key. Leave current referrer and API restrictions in place. Plain HTTP on a Wi-Fi IP is unsuitable for testing browser geolocation.
 
-`npm run test:e2e` tests both the no-key fallback and a stubbed SDK layout/marker path without Google service calls. It does not exercise real map imagery, Google control sizing, Google billing/key restrictions, or real iPhone Safari gestures. Manually review those interactions with the existing configured preview before the architecture review.
+1. **Portrait:** Open Discover. Check that the first offer is visible sooner, the next filter chip peeks into view, and only the chip row moves sideways. Open Map and check the search field, map controls, sticky header, and bottom navigation against the notch and home indicator.
+2. **Live tiles and gestures:** Confirm tiles appear. Pan, pinch, and zoom with map controls. Swipe the filter strip without moving the map. Change market, search, and category, then check that pins and the list agree.
+3. **Selection and navigation:** Tap a fictional pin and its matching card. Confirm the full non-redemption notice and **Demo location — directions unavailable**. Save a spot, switch between Discover, Map, and Saved, and use browser Back. Rotate to landscape and back with Map open and repeat while Map is hidden. Check for blank tiles, clipped controls, and lost saves.
+4. **Location:** Start with a fresh site permission state. Verify there is no prompt until **Use my location** is tapped. Deny and confirm browsing still works. Reset permission and allow while using the site. Verify the map recenters, then reload and confirm location is not restored by DUSK. Try with system location disabled if available.
+5. **Fallback:** Use a separate no-key test process or block the Maps script through device debugging while keeping the app reachable. Confirm the status explains the failure and the filtered list, navigation, and saves still work. Keep the existing key configuration intact.
+
+Chromium checks use four CSS-pixel widths, a stubbed SDK for markers and resize/re-entry, and a simulated map error and no-key fallback. Component tests cover location opt-in, denial, and success. These checks do not verify live tiles, WebView referrers, physical gestures, OS permission prompts, or actual safe-area insets.
+
+See [Native app feasibility](native-app-feasibility.md) for WebView-specific Maps and location checks.

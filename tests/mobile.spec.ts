@@ -34,6 +34,22 @@ async function assertLayout(page: Page) {
   expect(header!.y + header!.height).toBeLessThan(geometry.nav.top);
 }
 
+async function assertCategoryAffordance(page: Page) {
+  const categories = page.getByRole("group", { name: "Filter by category" });
+  const start = await categories.evaluate((strip) => {
+    const edge = strip.getBoundingClientRect().left + strip.clientWidth;
+    return Array.from(strip.querySelectorAll("button"), (button) => {
+      const { left, right } = button.getBoundingClientRect();
+      return left + 4 < edge && right - 4 > edge;
+    }).some(Boolean);
+  });
+  expect(start).toBe(true);
+  const lastChip = categories.getByRole("button", { name: "Late night" });
+  await lastChip.focus();
+  await expect(lastChip).toBeInViewport({ ratio: 0.99 });
+  expect(await categories.evaluate((strip) => strip.scrollLeft)).toBeGreaterThan(0);
+}
+
 test.beforeEach(async ({ page }) => {
   // Keep the no-key preview deterministic and avoid remote assets/service costs.
   await page.route(
@@ -83,8 +99,10 @@ for (const width of [320, 375, 390, 430]) {
     await expect(page.getByLabel("Choose city")).toBeInViewport();
     await expect(page.getByLabel("Search spots")).toBeInViewport();
     await expect(page.locator(".card").first()).toBeInViewport();
+    await expect(page.locator(".offer-tag").first()).toBeInViewport({ ratio: 1 });
     await assertLayout(page);
     await page.screenshot({ path: testInfo.outputPath("discover.png") });
+    await assertCategoryAffordance(page);
     await page.getByLabel("Save The Velvet Room", { exact: true }).click();
     await nav.getByRole("link", { name: "Saved", exact: true }).click();
     await expect(page).toHaveURL(/#saved$/);
@@ -327,7 +345,7 @@ for (const width of [320, 375, 390, 430]) {
         (element) => element.scrollWidth > element.clientWidth,
       ),
     ).toBe(true);
-    await page.getByRole("button", { name: "Late night", exact: true }).focus();
+    await assertCategoryAffordance(page);
     await page.keyboard.press("Enter");
     await expect(page.locator(".map-canvas button")).toHaveCount(1);
     await expect(page.getByText("1 pin", { exact: true })).toBeVisible();
@@ -380,4 +398,28 @@ test("desktop map keeps its layout and blocks demo directions", async ({
   await expect(
     page.getByRole("dialog").getByRole("link", { name: /directions/i }),
   ).toHaveCount(0);
+});
+
+test("map layout recovers after resizing and a Maps error leaves navigation usable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 812 });
+  await installMapStub(page);
+  await page.goto("/#map");
+  const nav = page.getByRole("navigation", { name: "App navigation" });
+  await expect(page.getByText("4 pins", { exact: true })).toBeVisible();
+  const canvas = page.locator(".map-canvas");
+  const portrait = (await canvas.boundingBox())!;
+  await nav.getByRole("link", { name: "Discover" }).click();
+  await page.setViewportSize({ width: 700, height: 400 });
+  await nav.getByRole("link", { name: "Map" }).click();
+  const landscape = (await canvas.boundingBox())!;
+  expect(landscape.width).toBeGreaterThan(portrait.width);
+  expect(landscape.height).toBeLessThan(portrait.height);
+  await expect(canvas.getByRole("button")).toHaveCount(4);
+  await assertLayout(page);
+  await page.evaluate(() => window.dispatchEvent(new Event("dusk-maps-error")));
+  await expect(canvas).toBeHidden();
+  await expect(page.getByText(/Google Maps could not load/)).toBeVisible();
+  await expect(page.locator(".card")).toHaveCount(4);
+  await nav.getByRole("link", { name: "Saved" }).click();
+  await expect(page.getByText("No saved spots yet.")).toBeVisible();
 });
