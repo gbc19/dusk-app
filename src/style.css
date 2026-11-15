@@ -1190,6 +1190,16 @@ input:focus-visible {
 .map-canvas[hidden] {
   display: none;
 }
+
+/* The Android plugin places its map beneath the WebView. */
+:root:has(.native-map-ready),
+.map-panel.native-map-ready,
+.native-map-ready .map-canvas {
+  background: transparent;
+}
+capacitor-google-map.map-canvas {
+  display: block;
+}
 .map-canvas button {
   color: initial;
 }

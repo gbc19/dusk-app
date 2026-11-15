@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { Capacitor } from "@capacitor/core";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -27,6 +28,7 @@ import {
 } from "./data";
 import { venueDirectionsUrl } from "./domain/directions";
 import { VenueMap } from "./components/VenueMap";
+import { NativeVenueMap } from "./components/NativeVenueMap";
 import { VenueImage } from "./components/VenueImage";
 import { useScreen, type Screen } from "./navigation/useScreen";
 import symbolLogo from "./assets/dusk-logo-new.png";
@@ -40,6 +42,7 @@ function readSaved(key: string): unknown {
 }
 export function App({ publicCatalog }: { publicCatalog?: unknown } = {}) {
   const { screen, navigate } = useScreen();
+  const nativeAndroid = Capacitor.getPlatform() === "android";
   const realMode = publicCatalog !== undefined;
   const savedKey = realMode ? "dusk-saved-venues" : "dusk-saved";
   const listings = useMemo(
@@ -312,7 +315,13 @@ export function App({ publicCatalog }: { publicCatalog?: unknown } = {}) {
               </button>
             )}
           </div>
-          {mapOpened && (
+          {nativeAndroid ? (
+            screen === "map" && (
+              <div className="map-slot">
+                <NativeVenueMap city={city} deals={visible} onSelect={setSelected} />
+              </div>
+            )
+          ) : mapOpened && (
             <div className="map-slot" hidden={screen !== "map"}>
               <VenueMap
                 active={screen === "map"}
