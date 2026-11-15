@@ -17,7 +17,7 @@ cp -n .env.example .env.local
 npm run dev -- --port 5173 --strictPort
 ```
 
-Requires Node.js 22.12+ (or 20.19+). In the Codespace **Ports** panel, open port **5173** in your browser. Keep the forwarded port private. The app works immediately without a Maps key: choose **Map** to see the explanatory fallback above the working venue list.
+Use Node.js 22.12 or newer for this checkout. In the Codespace **Ports** panel, open port **5173** in your browser. Keep the forwarded port private. The app works immediately without a Maps key: choose **Map** to see the explanatory fallback above the working venue list.
 
 To test the actual map, set `VITE_GOOGLE_MAPS_API_KEY` in your untracked `.env.local` using an existing appropriately restricted Google Maps browser key, then restart Vite. Never put a key into a tracked file, PR comment, or chat. See [Maps setup and cost controls](docs/google-maps.md) before using a key. Vite browser keys are visible in the browser bundle, so restrictions are essential; `.env.local` prevents accidental source commits, not browser exposure.
 
@@ -26,6 +26,10 @@ To test the actual map, set `VITE_GOOGLE_MAPS_API_KEY` in your untracked `.env.l
 The three navigation links are **Discover**, **Map**, and **Saved**. They use `#discover`, `#map`, and `#saved` destinations, support direct links and browser back/forward, and keep the selected market, search, and category while moving between screens. A repeated tap on the active destination returns to the top without adding a history entry. Search/filter state stays in memory and resets on a full reload; saved deal IDs retain the existing `dusk-saved` local-storage format.
 
 On phones (below 768px), the logo and market selector stay in a compact sticky header, and the large hero is replaced with a short $1 Drinks introduction. Search, category buttons, and compact cards come first. Navigation icons have text labels and `aria-current`; tap targets are at least 44px. The bottom bar and page padding include iPhone safe-area space, with `viewport-fit=cover`. Saved has a useful empty state and a Back to Discover action. The Map destination keeps the list fallback and offers an optional **Saved only** marker filter.
+
+## Native prototypes
+
+The Android Studio and Xcode projects bundle the existing web app with Capacitor 8.6.2. Use the [native prototype instructions](docs/native-prototype.md) for platform setup, local installs, the temporary app ID, and the device checklist. The web development and build commands still run independently.
 
 ## Development checks
 
