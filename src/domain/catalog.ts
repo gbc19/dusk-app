@@ -32,7 +32,7 @@ export function venueMapPosition(venue: Venue): Coordinates | null {
     ? venue.verifiedLocation : null;
 }
 
-function isTimeZone(value: string): boolean {
+export function isTimeZone(value: unknown): value is string {
   if (!hasText(value) || !/^(?:UTC$|[A-Za-z_]+\/)/.test(value)) return false;
   try {
     new Intl.DateTimeFormat("en", { timeZone: value });

@@ -18,6 +18,10 @@ const review = { venueId: real.id, reviewedBy: "Reviewer", reviewedAt: "2026-01-
 
 test("preview offers retain their saved IDs and use the original venue records", () => {
   expect(deals.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5, 6]);
+  expect(deals.map(({ offerId }) => offerId)).toEqual([
+    "demo:1", "demo:2", "demo:3", "demo:4", "demo:5", "demo:6",
+  ]);
+  expect(deals.every(({ isDemo }) => isDemo)).toBe(true);
   expect(deals.map(({ venue }) => venue)).toEqual(venues);
   expect(knownSavedIds([2, 999, "2", null, 2, 6])).toEqual([2, 6]);
   expect(validateCatalog(venues)).toEqual([]);

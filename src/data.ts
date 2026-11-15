@@ -5,6 +5,8 @@ export type Category =
   "All spots" | "$1 drinks" | "Cocktails" | "Beer" | "Late night";
 export interface Deal {
   id: number;
+  offerId: string;
+  isDemo: true;
   venue: DemoVenue;
   category: Category;
   offer: string;
@@ -86,7 +88,7 @@ export const venues: readonly DemoVenue[] = [
 ];
 
 // Keep the preview UI and numeric saved-deal IDs stable.
-const offers: (Omit<Deal, "venue"> & { venueId: string })[] = [
+const offers: (Omit<Deal, "venue" | "offerId" | "isDemo"> & { venueId: string })[] = [
   {
     id: 1,
     venueId: "venue-1",
@@ -159,7 +161,7 @@ const venuesById = new Map(venues.map((venue) => [venue.id, venue]));
 export const deals: Deal[] = offers.map(({ venueId, ...offer }) => {
   const venue = venuesById.get(venueId);
   if (!venue) throw new Error(`Unknown venue: ${venueId}`);
-  return { ...offer, venue };
+  return { ...offer, offerId: `demo:${offer.id}`, isDemo: true, venue };
 });
 
 export function realVenueListings(catalog: unknown): Listing[] {

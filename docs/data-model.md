@@ -33,6 +33,8 @@ Staff roles are design vocabulary, not implemented permissions. When adding a ba
 
 ## Future extensions — design only, disabled
 
+See [Offer data and scheduling](offer-scheduling.md) for the separate offer contracts, validation, and calendar rules. The current deal cards and numeric saved IDs remain preview data.
+
 These are relationship sketches, not implemented interfaces or storage tables. Final fields and states should be decided with each feature's actual requirements.
 
 DUSK may later support venue-based, opt-in dating or social discovery. Stable venue IDs can identify the venue for those features. This phase adds no dating, profiles, location verification, or social functionality.
