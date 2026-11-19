@@ -4,7 +4,7 @@
 
 ## What can be reused
 
-The React/Vite app emits static files to `dist`. Discover, Map, and Saved use hash navigation, and saves are device-local. Capacitor can bundle those files in iOS and Android shells using `webDir: "dist"`. A native build on each platform gets its own storage, so existing browser saves do not transfer. The current preview runs without a backend. Its fixtures still show Atlantic City and New York City. Las Vegas is the intended market, with catalog content to be handled separately.
+The React/Vite app emits static files to `dist`. Discover, Map, and Saved use hash navigation, and saves are device-local. Capacitor can bundle those files in iOS and Android shells using `webDir: "dist"`. A native build on each platform gets its own storage, so existing browser saves do not transfer. The current preview runs without a backend. Phase 6A fixtures include Las Vegas, Atlantic City, and New York City. The shared market registry and fictional Vegas catalog are documented in [Las Vegas demonstration market](las-vegas-demo.md).
 
 ## Next implementation step
 

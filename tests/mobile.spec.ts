@@ -50,7 +50,12 @@ async function assertCategoryAffordance(page: Page) {
   expect(await categories.evaluate((strip) => strip.scrollLeft)).toBeGreaterThan(0);
 }
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page }, testInfo) => {
+  if (!testInfo.title.startsWith("Las Vegas")) {
+    await page.addInitScript(() => {
+      if (!localStorage.getItem("dusk-market")) localStorage.setItem("dusk-market", "atlantic-city");
+    });
+  }
   // Keep the no-key preview deterministic and avoid remote assets/service costs.
   await page.route(
     /https:\/\/(images\.unsplash\.com|fonts\.(googleapis|gstatic)\.com)/,
@@ -422,4 +427,56 @@ test("map layout recovers after resizing and a Maps error leaves navigation usab
   await expect(page.locator(".card")).toHaveCount(4);
   await nav.getByRole("link", { name: "Saved" }).click();
   await expect(page.getByText("No saved spots yet.")).toBeVisible();
+});
+
+
+for (const width of [320, 375, 390, 430, 1280]) {
+  test("Las Vegas default, filters, markers and saved preference at " + width + "px", async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await installMapStub(page);
+    await page.goto("/#map");
+    await expect(page.getByLabel("Choose city")).toHaveValue("Las Vegas");
+    await expect(page.locator(".card")).toHaveCount(7);
+    await expect(page.locator(".map-canvas button")).toHaveCount(7);
+    await expect(page.locator(".demo-badge")).toHaveCount(7);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await page.locator(".map-canvas button").filter({ hasText: "$1" }).first().click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toContainText("Cinder Circuit");
+    await expect(dialog).toContainText("Cannot be redeemed");
+    await expect(dialog.getByRole("link", { name: /directions/i })).toHaveCount(0);
+    await page.getByLabel("Close venue details").click();
+    await page.getByRole("button", { name: "Beer", exact: true }).click();
+    await expect(page.locator(".map-canvas button")).toHaveCount(2);
+    await page.getByLabel("Search spots").fill("Overtime");
+    await expect(page.locator(".card")).toHaveCount(1);
+    await expect(page.locator(".map-canvas button")).toHaveCount(1);
+    await page.getByLabel("Save Overtime Mirage", { exact: true }).click();
+    await page.getByRole("link", { name: "Saved", exact: true }).click();
+    await expect(page.locator(".card")).toContainText("Overtime Mirage");
+    await page.reload();
+    await expect(page.getByLabel("Choose city")).toHaveValue("Las Vegas");
+    await expect(page.locator(".card")).toHaveCount(1);
+    await page.getByRole("link", { name: "Map", exact: true }).click();
+    await page.getByRole("button", { name: "All spots", exact: true }).click();
+    await page.getByLabel("Search spots").fill("");
+    for (const [city, count] of [["Atlantic City", 4], ["New York City", 2], ["Las Vegas", 7]] as const) {
+      await page.getByLabel("Choose city").selectOption(city);
+      await expect(page.locator(".card")).toHaveCount(count);
+      await expect(page.locator(".map-canvas button")).toHaveCount(count);
+    }
+    await page.getByLabel("Choose city").selectOption("New York City");
+    await page.reload();
+    await expect(page.getByLabel("Choose city")).toHaveValue("New York City");
+    await expect(page.locator(".card")).toHaveCount(2);
+  });
+}
+
+test("Las Vegas no-key fallback keeps all fictional previews accessible", async ({ page }) => {
+  await page.goto("/#map");
+  await expect(page.getByLabel("Choose city")).toHaveValue("Las Vegas");
+  await expect(page.getByText(/no Google Maps key is configured/)).toBeVisible();
+  await expect(page.locator(".card")).toHaveCount(7);
+  await page.getByRole("button", { name: "Saffron Static Lounge", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("No offer can be purchased or redeemed");
 });

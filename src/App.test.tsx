@@ -2,7 +2,10 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { App } from "./main";
 import { filterDeals, deals } from "./data";
-beforeEach(() => vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", ""));
+beforeEach(() => {
+  vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
+  localStorage.setItem("dusk-market", "atlantic-city");
+});
 afterEach(() => {
   cleanup();
   localStorage.clear();
@@ -137,4 +140,37 @@ test("app navigation shares filters and city while Saved keeps existing local de
     "aria-pressed",
     "true",
   );
+});
+
+
+test("new installations default to Vegas, preserve later choices, and label every demo", () => {
+  localStorage.removeItem("dusk-market");
+  const view = render(<App />);
+  expect(screen.getByLabelText("Choose city")).toHaveValue("Las Vegas");
+  expect(screen.getAllByText("FICTIONAL DEMO VENUE")).toHaveLength(7);
+  expect(screen.getAllByText("NON-REDEEMABLE PREVIEW")).toHaveLength(7);
+  fireEvent.click(screen.getByRole("button", { name: "Cinder Circuit" }));
+  expect(screen.getByRole("dialog")).toHaveTextContent("Cannot be redeemed");
+  expect(screen.getByRole("dialog")).toHaveTextContent("Demo location — directions unavailable");
+  expect(screen.queryByRole("link", { name: "Directions" })).toBeNull();
+  fireEvent.click(screen.getByLabelText("Close venue details"));
+  fireEvent.change(screen.getByLabelText("Choose city"), { target: { value: "New York City" } });
+  expect(localStorage.getItem("dusk-market")).toBe("new-york-city");
+  view.unmount();
+  render(<App />);
+  expect(screen.getByLabelText("Choose city")).toHaveValue("New York City");
+  expect(screen.getByText("Juniper & Co.")).toBeVisible();
+});
+
+test("Vegas remains usable without Maps and with unavailable preference storage", () => {
+  localStorage.removeItem("dusk-market");
+  vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("storage denied"); });
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("storage denied"); });
+  render(<App />);
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
+  expect(screen.getByText(/no Google Maps key is configured/)).toBeVisible();
+  expect(screen.getByText("Overtime Mirage")).toBeVisible();
+  fireEvent.change(screen.getByLabelText("Choose city"), { target: { value: "Atlantic City" } });
+  expect(screen.getByText("The Velvet Room")).toBeVisible();
+  vi.restoreAllMocks();
 });

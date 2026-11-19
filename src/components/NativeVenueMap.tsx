@@ -1,6 +1,7 @@
 import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import type { City, Listing } from "../data";
 import { venueMapPosition } from "../domain/catalog";
+import { marketForCity } from "../domain/markets";
 import { openNativeMap } from "../maps/native";
 
 type NativeMap = NonNullable<Awaited<ReturnType<typeof openNativeMap>>>;
@@ -48,7 +49,7 @@ export function NativeVenueMap({ city, deals, onSelect }: {
     }, 15000);
     void (async () => {
       try {
-        native = await openNativeMap(element, `dusk-venues-${++nextMapId}`);
+        native = await openNativeMap(element, `dusk-venues-${++nextMapId}`, marketForCity(city).center);
         if (closed) {
           close();
           return;
@@ -115,9 +116,7 @@ export function NativeVenueMap({ city, deals, onSelect }: {
         });
         await map.fitBounds(bounds, 48);
       } else {
-        const center = pins[0]?.coordinate ?? (city === "Atlantic City"
-          ? { lat: 39.3643, lng: -74.4229 }
-          : { lat: 40.725, lng: -73.975 });
+        const center = pins[0]?.coordinate ?? marketForCity(city).center;
         await map.setCamera({ coordinate: center, zoom: pins.length ? 15 : 13 });
       }
     }).catch(() => {

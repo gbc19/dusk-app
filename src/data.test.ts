@@ -17,8 +17,8 @@ const real: RealVenue = {
 const review = { venueId: real.id, reviewedBy: "Reviewer", reviewedAt: "2026-01-01", source: "Private test source" };
 
 test("preview offers retain their saved IDs and use the original venue records", () => {
-  expect(deals.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5, 6]);
-  expect(deals.map(({ offerId }) => offerId)).toEqual([
+  expect(deals.slice(0, 6).map(({ id }) => id)).toEqual([1, 2, 3, 4, 5, 6]);
+  expect(deals.slice(0, 6).map(({ offerId }) => offerId)).toEqual([
     "demo:1", "demo:2", "demo:3", "demo:4", "demo:5", "demo:6",
   ]);
   expect(deals.every(({ isDemo }) => isDemo)).toBe(true);

@@ -26,6 +26,7 @@ import {
   type Listing,
   type SavedId,
 } from "./data";
+import { markets, marketForCity, preferredMarket } from "./domain/markets";
 import { venueDirectionsUrl } from "./domain/directions";
 import { VenueMap } from "./components/VenueMap";
 import { NativeVenueMap } from "./components/NativeVenueMap";
@@ -49,7 +50,13 @@ export function App({ publicCatalog }: { publicCatalog?: unknown } = {}) {
     () => realMode ? realVenueListings(publicCatalog) : deals,
     [publicCatalog, realMode],
   );
-  const [city, setCity] = useState<City>("Atlantic City"),
+  const [city, setCity] = useState<City>(() => {
+    try {
+      return preferredMarket(localStorage.getItem("dusk-market")).city;
+    } catch {
+      return preferredMarket(null).city;
+    }
+  }),
     [category, setCategory] = useState<Category>("All spots"),
     [query, setQuery] = useState(""),
     [storedSaved, setSaved] = useState<SavedId[]>(() => knownSavedIds(readSaved(savedKey), listings)),
@@ -132,12 +139,19 @@ export function App({ publicCatalog }: { publicCatalog?: unknown } = {}) {
             aria-label="Choose city"
             value={city}
             onChange={(e) => {
-              setCity(e.target.value as City);
+              const city = e.target.value as City;
+              setCity(city);
+              try {
+                localStorage.setItem("dusk-market", marketForCity(city).id);
+              } catch {
+                /* Keep the selected market for this session if storage is unavailable. */
+              }
               setSelected(null);
             }}
           >
-            <option>Atlantic City</option>
-            <option>New York City</option>
+            {markets.map((market) => (
+              <option key={market.id} value={market.city}>{market.displayName}</option>
+            ))}
           </select>
         </div>
         <span className="age">21+ ONLY</span>

@@ -44,6 +44,7 @@ class FakeMarker {
 }
 const active = () => markers.filter((marker) => marker.map);
 beforeEach(() => {
+  localStorage.setItem("dusk-market", "atlantic-city");
   maps = [];
   markers = [];
   vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "test-key");
@@ -213,6 +214,33 @@ test("successful geolocation centers the existing map without persisting coordin
     await screen.findByRole("button", { name: "Use my location" }),
   );
   expect(maps[0].panTo).toHaveBeenCalledWith({ lat: 39.36, lng: -74.43 });
-  expect(localStorage.length).toBe(0);
+  expect(localStorage.getItem("dusk-market")).toBe("atlantic-city");
+  expect(localStorage.length).toBe(1);
+  expect(maps).toHaveLength(1);
+});
+
+
+test("Vegas markers, details and empty-result centers stay synchronized across three markets", async () => {
+  localStorage.removeItem("dusk-market");
+  render(<App />);
+  fireEvent.click(screen.getByRole("link", { name: "Map" }));
+  await waitFor(() => expect(active()).toHaveLength(7));
+  const vegas = deals.filter((deal) => deal.venue.city === "Las Vegas");
+  expect(active().map((marker) => marker.position)).toEqual(vegas.map((deal) => deal.venue.demoLocation));
+  fireEvent.click(active()[0].content!);
+  expect(screen.getByRole("dialog")).toHaveTextContent(vegas[0].venue.name);
+  expect(screen.getByRole("dialog")).toHaveTextContent("Cannot be redeemed");
+  fireEvent.click(screen.getByLabelText("Close venue details"));
+  fireEvent.click(screen.getByRole("button", { name: "Beer" }));
+  expect(active()).toHaveLength(2);
+  fireEvent.change(screen.getByLabelText("Search spots"), { target: { value: "missing" } });
+  expect(active()).toHaveLength(0);
+  expect(maps[0].setCenter).toHaveBeenLastCalledWith({ lat: 36.145, lng: -115.156 });
+  fireEvent.change(screen.getByLabelText("Search spots"), { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: "All spots" }));
+  for (const [city, count] of [["Atlantic City", 4], ["New York City", 2], ["Las Vegas", 7]] as const) {
+    fireEvent.change(screen.getByLabelText("Choose city"), { target: { value: city } });
+    expect(active()).toHaveLength(count);
+  }
   expect(maps).toHaveLength(1);
 });

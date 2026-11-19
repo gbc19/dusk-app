@@ -1,4 +1,6 @@
 import { importPublicCatalog, isVenueVisible, validateCatalog } from "./domain/catalog";
+import { lasVegasDeals, lasVegasVenues, lasVegasOfferCatalog } from "./data/las-vegas";
+import { validateOfferCatalog } from "./domain/offers";
 import type { City, DemoVenue, RealVenue } from "./domain/models";
 export type { City } from "./domain/models";
 export type Category =
@@ -9,6 +11,7 @@ export interface Deal {
   isDemo: true;
   venue: DemoVenue;
   category: Category;
+  filterCategories?: readonly Category[];
   offer: string;
   description: string;
   time: string;
@@ -85,6 +88,7 @@ export const venues: readonly DemoVenue[] = [
     timeZone: "America/New_York",
     status: "preview",
   },
+  ...lasVegasVenues,
 ];
 
 // Keep the preview UI and numeric saved-deal IDs stable.
@@ -154,15 +158,21 @@ const offers: (Omit<Deal, "venue" | "offerId" | "isDemo"> & { venueId: string })
     tag: "THE NIGHT IS STILL YOUNG",
   },
 ];
-const errors = validateCatalog(venues, offers);
+const errors = [
+  ...validateCatalog(venues, [...offers, ...lasVegasDeals.map((deal) => ({ venueId: deal.venue.id }))]),
+  ...validateOfferCatalog(lasVegasOfferCatalog, venues),
+];
 if (errors.length) throw new Error(errors.join("\n"));
 
 const venuesById = new Map(venues.map((venue) => [venue.id, venue]));
-export const deals: Deal[] = offers.map(({ venueId, ...offer }) => {
-  const venue = venuesById.get(venueId);
-  if (!venue) throw new Error(`Unknown venue: ${venueId}`);
-  return { ...offer, offerId: `demo:${offer.id}`, isDemo: true, venue };
-});
+export const deals: Deal[] = [
+  ...offers.map<Deal>(({ venueId, ...offer }) => {
+    const venue = venuesById.get(venueId);
+    if (!venue) throw new Error(`Unknown venue: ${venueId}`);
+    return { ...offer, offerId: `demo:${offer.id}`, isDemo: true, venue };
+  }),
+  ...lasVegasDeals,
+];
 
 export function realVenueListings(catalog: unknown): Listing[] {
   return importPublicCatalog(catalog).map((venue) => ({ id: venue.id, venue }));
@@ -188,7 +198,8 @@ export function filterDeals(
     const searchable = "offer" in listing ? listing.offer : venue.address;
     return isVenueVisible(venue) &&
       venue.city === city &&
-      (category === "All spots" || ("offer" in listing && listing.category === category)) &&
+      (category === "All spots" || ("offer" in listing &&
+        (listing.category === category || listing.filterCategories?.includes(category)))) &&
       (!savedOnly || saved.includes(id)) &&
       `${venue.name} ${venue.neighborhood} ${searchable ?? ""}`.toLowerCase().includes(search);
   });

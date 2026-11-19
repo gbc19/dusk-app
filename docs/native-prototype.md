@@ -2,7 +2,7 @@
 
 Capacitor **8.6.2** packages the React/Vite output in `dist` for Android and iOS. Use Node.js 22.12 or newer for this repo. The native projects use the name **DUSK** and the temporary local ID `com.example.dusk.prototype`. Before registering either app or inviting beta testers, the founder should confirm a permanent reverse-DNS identifier based on a company-controlled domain and approve it in `capacitor.config.ts`, Android's namespace/application ID and Java package, and Xcode's bundle ID. A different app ID installs as a separate app and has separate Saved data.
 
-The packaged prototype uses the existing six fictional, non-redeemable offers for Atlantic City and New York City. Las Vegas is the planned market. The website remains a separate workstream, and `npm run dev` and `npm run build` still use the web configuration.
+The packaged prototype uses the existing thirteen fictional, non-redeemable previews across Las Vegas, Atlantic City, and New York City. Las Vegas is the initial default market. See [Vegas update and emulator checks](las-vegas-demo.md). The website remains a separate workstream, and `npm run dev` and `npm run build` still use the web configuration.
 
 ## Android on Windows
 
@@ -49,7 +49,7 @@ Without a key or after a detected initialization error, Map shows a status and t
 
 ## Native device checklist
 
-- Confirm the app opens without a dev server and the six fictional previews stay labeled, including in details. Try airplane mode and verify the venue list and local image fallback.
+- Confirm the app opens without a dev server and the fictional previews stay labeled, including in details. Try airplane mode and verify the venue list and local image fallback.
 - Check portrait and landscape, system bars and safe areas, category swipes, search keyboard, and the detail modal. On Android, test system Back from Map, Saved, and a detail modal. On iOS, verify navigation after suspend/resume.
 - Save a venue, force-close and reopen the app, and confirm the save persists. Browser and native saves use separate storage.
 - Open Map in a build without a key and verify the explanation and usable list. Test the configured Android flow separately. There should be no native location permission prompt. Use the [physical-device Maps checklist](google-maps.md#physical-device-checklist) for the authorized HTTPS browser preview. Current demo details expose no directions link.

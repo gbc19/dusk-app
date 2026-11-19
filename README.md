@@ -1,6 +1,6 @@
 # DUSK 2.0
 
-A React + TypeScript nightlife discovery preview for Atlantic City and New York City, built with Vite. Includes Discover, Map, and Saved destinations with shared city/search/category filters, device-local saved spots, venue detail dialogs, and an optional Google Maps JavaScript venue map. Phones use a fixed, safe-area-aware bottom bar and compact cards; desktop keeps a spacious layout.
+A React + TypeScript nightlife discovery preview for Las Vegas, Atlantic City, and New York City, built with Vite. Includes Discover, Map, and Saved destinations with shared city/search/category filters, device-local saved spots, venue detail dialogs, and an optional Google Maps JavaScript venue map. Phones use a fixed, safe-area-aware bottom bar and compact cards; desktop keeps a spacious layout.
 
 All venues, offers, hours, and map coordinates are fictional. Offers are non-redeemable previews pending local regulatory approval and venue confirmation. No purchase, booking, payment, or redemption is implemented. Content is intended for adults 21+.
 
@@ -23,9 +23,11 @@ To test the actual map, set `VITE_GOOGLE_MAPS_API_KEY` in your untracked `.env.l
 
 ## Mobile app navigation
 
-The three navigation links are **Discover**, **Map**, and **Saved**. They use `#discover`, `#map`, and `#saved` destinations, support direct links and browser back/forward, and keep the selected market, search, and category while moving between screens. A repeated tap on the active destination returns to the top without adding a history entry. Search/filter state stays in memory and resets on a full reload; saved deal IDs retain the existing `dusk-saved` local-storage format.
+The three navigation links are **Discover**, **Map**, and **Saved**. They use `#discover`, `#map`, and `#saved` destinations, support direct links and browser back/forward, and keep the selected market, search, and category while moving between screens. A repeated tap on the active destination returns to the top without adding a history entry. The selected market persists locally using a stable market ID, with Las Vegas as the initial default. Search/category state stays in memory and resets on a full reload; saved deal IDs retain the existing `dusk-saved` local-storage format.
 
 On phones (below 768px), the logo and market selector stay in a compact sticky header, and the large hero is replaced with a short $1 Drinks introduction. Search, category buttons, and compact cards come first. Navigation icons have text labels and `aria-current`; tap targets are at least 44px. The bottom bar and page padding include iPhone safe-area space, with `viewport-fit=cover`. Saved has a useful empty state and a Back to Discover action. The Map destination keeps the list fallback and offers an optional **Saved only** marker filter.
+
+See [Las Vegas demo data and Windows/emulator checks](docs/las-vegas-demo.md) for the seven fictional Vegas venues, representative coordinate sources, and update instructions.
 
 ## Native prototypes
 

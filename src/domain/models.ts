@@ -1,10 +1,11 @@
 /** Persistence-independent contracts; these types do not create accounts or services. */
-export type City = "Atlantic City" | "New York City";
+import type { City } from "./markets";
+export type { City } from "./markets";
 export type VenueId = string;
 export type CustomerId = string;
 export type StaffId = string;
 
-export const venueCategories = ["bar", "cocktail-bar", "beer-hall", "nightclub"] as const;
+export const venueCategories = ["bar", "cocktail-bar", "beer-hall", "nightclub", "sports-bar", "rooftop-bar"] as const;
 export type Coordinates = { lat: number; lng: number };
 
 interface VenueIdentity {

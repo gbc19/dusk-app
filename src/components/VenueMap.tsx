@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 import type { City, Listing } from "../data";
 import { venueMapPosition } from "../domain/catalog";
+import { marketForCity } from "../domain/markets";
 import { loadGoogleMaps } from "../maps/loader";
 
 export function VenueMap({
@@ -51,7 +52,7 @@ export function VenueMap({
       .then((sdk) => {
         if (cancelled || !container.current) return;
         mapRef.current = new sdk.maps.Map(container.current, {
-          center: { lat: 39.3643, lng: -74.4229 },
+          center: marketForCity(city).center,
           zoom: 13,
           colorScheme: sdk.maps.ColorScheme.DARK,
           mapId: "DEMO_MAP_ID",
@@ -104,9 +105,7 @@ export function VenueMap({
       map.fitBounds(bounds, 60);
     } else {
       map.setCenter(
-        city === "Atlantic City"
-          ? { lat: 39.3643, lng: -74.4229 }
-          : { lat: 40.725, lng: -73.975 },
+        marketForCity(city).center,
       );
       map.setZoom(13);
     }

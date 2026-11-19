@@ -6,6 +6,8 @@ import {
   type VenueVerification,
 } from "./models";
 
+import { markets } from "./markets";
+
 function hasText(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
@@ -60,7 +62,7 @@ export function validateCatalog(
       ids.add(venue.id);
     }
     if (!hasText(venue.name) || !hasText(venue.neighborhood) ||
-        !["Atlantic City", "New York City"].includes(venue.city) ||
+        !markets.some((market) => market.city === venue.city && market.timeZone === venue.timeZone) ||
         !venueCategories.includes(venue.category) || !isTimeZone(venue.timeZone)) {
       errors.push(`${label}: missing or invalid venue fields`);
     }

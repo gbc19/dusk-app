@@ -48,3 +48,31 @@ test("native markers use filtered venue coordinates and open the original listin
   view.unmount();
   await waitFor(() => expect(map.destroy).toHaveBeenCalledTimes(1));
 });
+
+
+test("native Vegas map uses shared centers and original listings throughout market changes", async () => {
+  const vegas = deals.filter((deal) => deal.venue.city === "Las Vegas");
+  const map = {
+    setOnMarkerClickListener: vi.fn(),
+    addMarkers: vi.fn().mockImplementation(async (markers: unknown[]) => markers.map((_, index) => String(index))),
+    removeMarkers: vi.fn(), fitBounds: vi.fn(), setCamera: vi.fn(), destroy: vi.fn(),
+  };
+  open.mockResolvedValue({ map, LatLngBounds: class {} } as unknown as NonNullable<Awaited<ReturnType<typeof openNativeMap>>>);
+  const select = vi.fn();
+  const view = render(<NativeVenueMap city="Las Vegas" deals={vegas} onSelect={select} />);
+  await waitFor(() => expect(map.addMarkers).toHaveBeenCalled());
+  expect(open).toHaveBeenCalledWith(expect.any(HTMLElement), expect.any(String), { lat: 36.145, lng: -115.156 });
+  expect(map.addMarkers.mock.calls[0][0].map((marker: { coordinate: unknown }) => marker.coordinate))
+    .toEqual(vegas.map((deal) => deal.venue.demoLocation));
+  map.setOnMarkerClickListener.mock.calls[0][0]({ markerId: "0" });
+  expect(select).toHaveBeenLastCalledWith(vegas[0]);
+  for (const [city, center] of [
+    ["Atlantic City", { lat: 39.3643, lng: -74.4229 }],
+    ["New York City", { lat: 40.725, lng: -73.975 }],
+    ["Las Vegas", { lat: 36.145, lng: -115.156 }],
+  ] as const) {
+    view.rerender(<NativeVenueMap city={city} deals={[]} onSelect={select} />);
+    await waitFor(() => expect(map.setCamera).toHaveBeenLastCalledWith({ coordinate: center, zoom: 13 }));
+  }
+  expect(open).toHaveBeenCalledTimes(1);
+});
