@@ -19,3 +19,21 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run backend:start
+      - run: npm run backend:reset
+      - run: npm run backend:test
+      - run: npm run backend:test:api
+      - shell: pwsh
+        run: ./scripts/backend-network.test.ps1
+      - if: always()
+        run: npm run backend:stop
