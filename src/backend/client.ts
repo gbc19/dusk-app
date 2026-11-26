@@ -3,6 +3,7 @@ import type { Database } from './database';
 import type { BackendConfig } from './config';
 
 export const sessionKey = 'dusk-local-auth-v1';
+let cached: { identity: string; client: ReturnType<typeof makeBackend> } | undefined;
 /** Native tokens are memory-only. Web persistence is tab-scoped and remains vulnerable to XSS. */
 export function authStorage(native: boolean): SupportedStorage {
   const memory = new Map<string, string>();
@@ -14,8 +15,15 @@ export function authStorage(native: boolean): SupportedStorage {
   };
 }
 export function createBackend(config: Extract<BackendConfig, { mode: 'backend' }>, native: boolean) {
+  const identity = `${native}:${config.url}:${config.publicKey}`;
+  if (cached?.identity === identity) return cached.client;
+  const client = makeBackend(config, native);
+  cached = { identity, client };
+  return client;
+}
+function makeBackend(config: Extract<BackendConfig, { mode: 'backend' }>, native: boolean) {
   return createClient<Database, 'api'>(config.url, config.publicKey, {
-    db: { schema: 'api' },
+    db: { schema: 'api', retry: false },
     auth: { storage: authStorage(native), storageKey: sessionKey, persistSession: true,
       autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' },
     global: { fetch: (input, init) => fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(15000) }) },
