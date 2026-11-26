@@ -1,0 +1,18 @@
+node_modules/
+dist/
+work/
+.env*
+!.env.example
+*.tsbuildinfo
+test-results/
+playwright-report/
+
+# Native signing and machine-specific service configuration
+*.jks
+*.keystore
+*.p12
+*.p8
+*.mobileprovision
+keystore.properties
+google-services.json
+GoogleService-Info.plist

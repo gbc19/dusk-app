@@ -1,0 +1,482 @@
+import { expect, test, type Page } from "@playwright/test";
+
+async function assertLayout(page: Page) {
+  const geometry = await page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>(".app-navigation")!;
+    const rect = nav.getBoundingClientRect();
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>("a,button,input,select"),
+    ).filter((element) => element.checkVisibility());
+    return {
+      width: innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      nav: {
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+      },
+      targets: targets.map((element) => ({
+        name: element.getAttribute("aria-label") || element.textContent?.trim(),
+        width: element.getBoundingClientRect().width,
+        height: element.getBoundingClientRect().height,
+      })),
+    };
+  });
+  expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.width);
+  expect(geometry.nav.left).toBeGreaterThanOrEqual(0);
+  expect(geometry.nav.right).toBeLessThanOrEqual(geometry.width);
+  for (const target of geometry.targets) {
+    expect(target.width, `${target.name} width`).toBeGreaterThanOrEqual(44);
+    expect(target.height, `${target.name} height`).toBeGreaterThanOrEqual(44);
+  }
+  const header = await page.locator(".header").boundingBox();
+  expect(header!.y + header!.height).toBeLessThan(geometry.nav.top);
+}
+
+async function assertCategoryAffordance(page: Page) {
+  const categories = page.getByRole("group", { name: "Filter by category" });
+  const start = await categories.evaluate((strip) => {
+    const edge = strip.getBoundingClientRect().left + strip.clientWidth;
+    return Array.from(strip.querySelectorAll("button"), (button) => {
+      const { left, right } = button.getBoundingClientRect();
+      return left + 4 < edge && right - 4 > edge;
+    }).some(Boolean);
+  });
+  expect(start).toBe(true);
+  const lastChip = categories.getByRole("button", { name: "Late night" });
+  await lastChip.focus();
+  await expect(lastChip).toBeInViewport({ ratio: 0.99 });
+  expect(await categories.evaluate((strip) => strip.scrollLeft)).toBeGreaterThan(0);
+}
+
+test.beforeEach(async ({ page }, testInfo) => {
+  if (!testInfo.title.startsWith("Las Vegas")) {
+    await page.addInitScript(() => {
+      if (!localStorage.getItem("dusk-market")) localStorage.setItem("dusk-market", "atlantic-city");
+    });
+  }
+  // Keep the no-key preview deterministic and avoid remote assets/service costs.
+  await page.route(
+    /https:\/\/(images\.unsplash\.com|fonts\.(googleapis|gstatic)\.com)/,
+    (route) => route.abort(),
+  );
+});
+for (const width of [320, 375, 390, 430]) {
+  test(`mobile app navigation and layout at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 812 });
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "App navigation" });
+    await expect(
+      nav.getByRole("link", { name: "Discover", exact: true }),
+    ).toHaveAttribute("aria-current", "page");
+    const symbol = page.locator(".header .brand-symbol");
+    await expect(symbol).toBeVisible();
+    await expect(page.locator(".header .brand-wordmark")).toHaveText("DUSK");
+    await expect(page.locator(".header .brand-wordmark")).toHaveCSS(
+      "color",
+      "rgb(255, 255, 255)",
+    );
+    const brandingBox = (await page.locator(".header .logo").boundingBox())!;
+    const cityBox = (await page.locator(".header .city-select").boundingBox())!;
+    expect(brandingBox.x + brandingBox.width + 8).toBeLessThanOrEqual(
+      cityBox.x,
+    );
+    await expect
+      .poll(() =>
+        symbol.evaluate((image) => (image as HTMLImageElement).naturalWidth),
+      )
+      .toBe(1382);
+    const symbolBox = (await symbol.boundingBox())!;
+    expect(symbolBox.width / symbolBox.height).toBeCloseTo(1382 / 1138, 2);
+    await expect(page.locator(".header .logo")).toHaveCSS(
+      "background-color",
+      "rgba(0, 0, 0, 0)",
+    );
+    await expect(page.locator(".header .logo")).toHaveCSS(
+      "border-top-width",
+      "0px",
+    );
+    await expect(page.locator(".hero")).toBeHidden();
+    await expect(page.locator(".mobile-intro")).toContainText("$1 Drinks.");
+    await expect(page.getByLabel("Choose city")).toBeInViewport();
+    await expect(page.getByLabel("Search spots")).toBeInViewport();
+    await expect(page.locator(".card").first()).toBeInViewport();
+    await expect(page.locator(".offer-tag").first()).toBeInViewport({ ratio: 1 });
+    await assertLayout(page);
+    await page.screenshot({ path: testInfo.outputPath("discover.png") });
+    await assertCategoryAffordance(page);
+    await page.getByLabel("Save The Velvet Room", { exact: true }).click();
+    await nav.getByRole("link", { name: "Saved", exact: true }).click();
+    await expect(page).toHaveURL(/#saved$/);
+    await expect(page.locator(".card")).toHaveCount(1);
+    await expect(page.locator(".card")).toContainText("The Velvet Room");
+    await assertLayout(page);
+    await page.reload();
+    await expect(page.locator(".card")).toHaveCount(1);
+    await nav.getByRole("link", { name: "Discover", exact: true }).click();
+    await page.getByLabel("Choose city").selectOption("New York City");
+    await page.getByLabel("Search spots").fill("Juniper");
+    await page.getByRole("button", { name: "Cocktails", exact: true }).click();
+    await nav.getByRole("link", { name: "Map", exact: true }).click();
+    await expect(page.getByLabel("Choose city")).toHaveValue("New York City");
+    await expect(page.getByLabel("Search spots")).toHaveValue("Juniper");
+    await expect(
+      page.getByRole("button", { name: "Cocktails", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByText(/no Google Maps key is configured/),
+    ).toBeVisible();
+    await expect(page.locator(".card")).toHaveCount(1);
+    await expect(page.locator(".card")).toContainText("Juniper");
+    await assertLayout(page);
+    await nav.getByRole("link", { name: "Saved", exact: true }).click();
+    await expect(page.getByText("No spots here yet.")).toBeVisible();
+    await page.getByRole("button", { name: "Back to Discover" }).click();
+    await expect(page).toHaveURL(/#discover$/);
+    await expect(page.getByLabel("Search spots")).toHaveValue("");
+    await page.getByLabel("Choose city").selectOption("Atlantic City");
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const lastCard = await page.locator(".card").last().boundingBox();
+    const bar = await nav.boundingBox();
+    expect(lastCard!.y + lastCard!.height).toBeLessThanOrEqual(bar!.y);
+    await expect(page.locator("footer > p")).toHaveText(
+      "Don't Waste The Night.",
+    );
+    await expect(page.locator("footer > p")).toBeVisible();
+    await expect(page.locator("footer > span")).toHaveText(
+      "© 2015-2026 Dusk App LLC",
+    );
+    await expect(page.locator("footer > span")).toBeVisible();
+    expect(
+      (await page.locator("footer > span").boundingBox())!.y +
+        (await page.locator("footer > span").boundingBox())!.height,
+    ).toBeLessThanOrEqual((await nav.boundingBox())!.y);
+    await assertLayout(page);
+  });
+}
+test("browser history, deep links and saved empty-state return", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 812 });
+  await page.goto("/#saved");
+  await expect(page.getByText("No saved spots yet.")).toBeVisible();
+  await page.getByRole("button", { name: "Back to Discover" }).click();
+  const nav = page.getByRole("navigation", { name: "App navigation" });
+  await nav.getByRole("link", { name: "Map", exact: true }).click();
+  await expect(page).toHaveURL(/#map$/);
+  await page.goBack();
+  await expect(
+    nav.getByRole("link", { name: "Discover", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await page.goBack();
+  await expect(page.getByText("No saved spots yet.")).toBeVisible();
+  await page.goForward();
+  await expect(
+    nav.getByRole("link", { name: "Discover", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await page.goForward();
+  await expect(
+    nav.getByRole("link", { name: "Map", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+});
+test("bottom safe-area clearance and desktop navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 812 });
+  await page.goto("/");
+  // Simulate a 34px iPhone home-indicator inset in Chromium's desktop test runner.
+  await page.addStyleTag({
+    content:
+      ":root{--bottom-safe-area:34px!important;--top-safe-area:47px!important}",
+  });
+  const nav = page.getByRole("navigation", { name: "App navigation" });
+  expect((await nav.boundingBox())!.height).toBe(102);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const lastCard = await page.locator(".card").last().boundingBox();
+  expect(lastCard!.y + lastCard!.height).toBeLessThanOrEqual(
+    (await nav.boundingBox())!.y,
+  );
+  await assertLayout(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page.locator("footer > p")).toHaveText("Don't Waste The Night.");
+  await expect(page.locator("footer > p")).toBeVisible();
+  await expect(page.locator("footer > span")).toHaveText(
+    "© 2015-2026 Dusk App LLC",
+  );
+  await expect(page.locator("footer > span")).toBeVisible();
+  await expect(page.locator(".hero")).toBeVisible();
+  await expect(page.locator(".header .brand-wordmark")).toHaveText("DUSK");
+  await expect(page.locator(".header .brand-symbol")).toBeVisible();
+  await expect(page.locator(".header .brand-full")).toHaveCount(0);
+  expect((await nav.boundingBox())!.y).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    1280,
+  );
+  await nav.getByRole("link", { name: "Saved", exact: true }).click();
+  await expect(page.getByText("No saved spots yet.")).toBeVisible();
+});
+
+// Exercise real DOM/CSS sizing and marker selection without loading Google's service.
+async function installMapStub(page: Page) {
+  await page.route(
+    /\/src\/components\/VenueMap\.tsx(?:\?|$)/,
+    async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace(
+        "import.meta.env.VITE_GOOGLE_MAPS_API_KEY",
+        '"browser-test-only"',
+      );
+      await route.fulfill({ response, body });
+    },
+  );
+  await page.route(/\/src\/maps\/loader\.ts(?:\?|$)/, (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: `
+    export async function loadGoogleMaps(){
+      class Map{constructor(element){this.element=element;element.replaceChildren();}setCenter(){}setZoom(){}fitBounds(){}panTo(){}}
+      class AdvancedMarkerElement{constructor(options){this.content=options.content;this.map=options.map;}set map(value){this._map=value;if(this.content){if(value)value.element.append(this.content);else this.content.remove();}}get map(){return this._map;}}
+      window.google={maps:{Map,ColorScheme:{DARK:'DARK'},LatLngBounds:class{extend(){}},marker:{AdvancedMarkerElement}}};return window.google;
+    }
+  `,
+    }),
+  );
+}
+
+const realVenue = {
+  id: "synthetic-real", name: "Synthetic venue", city: "Atlantic City",
+  neighborhood: "Test district", timeZone: "America/New_York", category: "bar",
+  isDemo: false, status: "published", address: "100 Test Street",
+};
+
+async function openPublicCatalog(page: Page, input: unknown) {
+  await page.route("**/", async (route) => {
+    if (!route.request().isNavigationRequest()) return route.continue();
+    const response = await route.fetch();
+    const catalog = JSON.stringify(input).replaceAll("&", "&amp;").replaceAll('"', "&quot;")
+      .replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    const body = (await response.text())
+      .replace('id="root"', `id="catalog-test-root" data-catalog="${catalog}"`)
+      .replace("/src/main.tsx", "/tests/fixtures/catalog-entry.tsx");
+    await route.fulfill({ response, body });
+  });
+  await page.goto("/");
+}
+
+test("real venues can be saved, and a list-only venue has no pin or directions", async ({ page }) => {
+  await installMapStub(page);
+  await openPublicCatalog(page, [realVenue, {
+    ...realVenue, id: "synthetic-mapped", name: "Mapped venue",
+    verifiedLocation: { lat: 39.4, lng: -74.4, verified: true },
+  }]);
+  const nav = page.getByRole("navigation", { name: "App navigation" });
+  await expect(page.locator("footer small")).toContainText("Verified venue discovery.");
+  await expect(page.locator("footer > p")).toHaveText("Don't Waste The Night.");
+  await expect(page.locator("footer > span")).toHaveText("© 2015-2026 Dusk App LLC");
+  await nav.getByRole("link", { name: "Saved" }).click();
+  await expect(page.getByText("Open a venue and choose Save this spot to find it here later.")).toBeVisible();
+  await nav.getByRole("link", { name: "Discover" }).click();
+  await page.getByRole("button", { name: realVenue.name }).click();
+  const detail = page.getByRole("dialog");
+  await expect(detail).toContainText(realVenue.address);
+  await expect(detail.getByRole("link", { name: "Directions" })).toHaveCount(0);
+  await detail.getByRole("button", { name: "Save this spot" }).click();
+  await detail.getByRole("button", { name: "Close venue details" }).click();
+  await nav.getByRole("link", { name: "Saved" }).click();
+  await expect(page.locator(".card")).toHaveText(/Synthetic venue/);
+  await page.reload();
+  await expect(page.locator(".card")).toHaveText(/Synthetic venue/);
+  await nav.getByRole("link", { name: "Map" }).click();
+  await expect(page.locator(".map-canvas button")).toHaveCount(1);
+  await expect(page.locator(".map-canvas").getByRole("button", { name: /Mapped venue/ })).toBeVisible();
+});
+
+for (const [label, row] of [
+  ["malformed", { ...realVenue, address: "" }],
+  ["unpublished", { ...realVenue, status: "draft" }],
+  ["demo", { ...realVenue, isDemo: true, status: "preview" }],
+] as const) {
+  test(`real mode fails closed for a ${label} catalog row`, async ({ page }) => {
+    await openPublicCatalog(page, [{ ...realVenue, id: "valid" }, row]);
+    await expect(page.locator("footer small")).toContainText("Verified venue discovery.");
+    await expect(page.getByText("No spots here yet.")).toBeVisible();
+    await expect(page.locator(".card")).toHaveCount(0);
+    await expect(page.locator(".mobile-intro")).toHaveCount(0);
+  });
+}
+
+test("demo copy and existing saved spots stay available", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("dusk-saved", "[1]"));
+  await page.goto("/#saved");
+  await expect(page.locator(".card")).toHaveText(/The Velvet Room/);
+  await expect(page.locator("footer small")).toContainText("Demo only; offers are not redeemable.");
+});
+
+for (const width of [320, 375, 390, 430]) {
+  test(`mobile map is higher, larger, and safe at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 812 });
+    await installMapStub(page);
+    await page.goto("/#map");
+    await expect(page.locator(".launch-note p")).toHaveText(
+      "21+ · Fictional, non-redeemable previews.",
+      { useInnerText: true },
+    );
+    await expect(page.getByText("4 pins", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Fictional pins · Directions unavailable"),
+    ).toHaveCount(0);
+    const canvas = page.locator(".map-canvas");
+    const box = (await canvas.boundingBox())!;
+    expect(box.y).toBeLessThan(330);
+    expect(box.height).toBe(412);
+    const nav = page.getByRole("navigation", { name: "App navigation" });
+    expect(box.y + box.height).toBeLessThanOrEqual(
+      (await nav.boundingBox())!.y,
+    );
+    await expect(page.getByLabel("Search spots")).toBeInViewport();
+    const categories = page.getByRole("group", { name: "Filter by category" });
+    const row = await categories
+      .locator("button")
+      .evaluateAll((buttons) =>
+        buttons.map((button) => button.getBoundingClientRect().y),
+      );
+    expect(new Set(row).size).toBe(1);
+    expect(
+      await categories.evaluate(
+        (element) => element.scrollWidth > element.clientWidth,
+      ),
+    ).toBe(true);
+    await assertCategoryAffordance(page);
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".map-canvas button")).toHaveCount(1);
+    await expect(page.getByText("1 pin", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "All spots", exact: true }).click();
+    await expect(page.locator(".map-canvas button")).toHaveCount(4);
+    await assertLayout(page);
+    await page.screenshot({ path: testInfo.outputPath("map-stub.png") });
+    await page.locator(".map-canvas button").first().click();
+    await expect(page.getByRole("dialog")).toContainText(
+      "Demo location — directions unavailable",
+    );
+    await expect(page.getByRole("dialog").locator(".detail-warning")).toHaveText(
+      "Demo only. No offer can be purchased or redeemed. Any launch and promotion require local regulatory approval and venue confirmation. For adults 21+.",
+    );
+    await expect(page.locator('a[href*="/maps/dir/"]')).toHaveCount(0);
+    await page.getByLabel("Close venue details").click();
+    await page.getByLabel("Search spots").fill("Velvet");
+    await expect(page.locator(".map-canvas button")).toHaveCount(1);
+    await page.getByLabel("Choose city").selectOption("New York City");
+    await page.getByLabel("Search spots").fill("");
+    await expect(page.locator(".map-canvas button")).toHaveCount(2);
+    await assertLayout(page);
+  });
+}
+
+test("desktop map keeps its layout and blocks demo directions", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installMapStub(page);
+  await page.goto("/#map");
+  await expect(page.getByText(/4 filtered demo venue pins/)).toBeVisible();
+  const canvas = (await page.locator(".map-canvas").boundingBox())!;
+  expect(canvas.height).toBe(430);
+  await expect(page.locator(".map-intro-desktop")).toBeVisible();
+  await expect(page.locator(".map-status-mobile")).toBeHidden();
+  await expect(page.locator(".launch-note p")).toHaveText(
+    "21+ · Fictional, non-redeemable previews. Launch pending local regulatory approval.",
+    { useInnerText: true },
+  );
+  const results = (await page.locator(".results-row").boundingBox())!;
+  expect(results.y + results.height).toBeLessThan(canvas.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    1280,
+  );
+  await page.locator(".map-canvas button").first().click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Demo location — directions unavailable",
+  );
+  await expect(
+    page.getByRole("dialog").getByRole("link", { name: /directions/i }),
+  ).toHaveCount(0);
+});
+
+test("map layout recovers after resizing and a Maps error leaves navigation usable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 812 });
+  await installMapStub(page);
+  await page.goto("/#map");
+  const nav = page.getByRole("navigation", { name: "App navigation" });
+  await expect(page.getByText("4 pins", { exact: true })).toBeVisible();
+  const canvas = page.locator(".map-canvas");
+  const portrait = (await canvas.boundingBox())!;
+  await nav.getByRole("link", { name: "Discover" }).click();
+  await page.setViewportSize({ width: 700, height: 400 });
+  await nav.getByRole("link", { name: "Map" }).click();
+  const landscape = (await canvas.boundingBox())!;
+  expect(landscape.width).toBeGreaterThan(portrait.width);
+  expect(landscape.height).toBeLessThan(portrait.height);
+  await expect(canvas.getByRole("button")).toHaveCount(4);
+  await assertLayout(page);
+  await page.evaluate(() => window.dispatchEvent(new Event("dusk-maps-error")));
+  await expect(canvas).toBeHidden();
+  await expect(page.getByText(/Google Maps could not load/)).toBeVisible();
+  await expect(page.locator(".card")).toHaveCount(4);
+  await nav.getByRole("link", { name: "Saved" }).click();
+  await expect(page.getByText("No saved spots yet.")).toBeVisible();
+});
+
+
+for (const width of [320, 375, 390, 430, 1280]) {
+  test("Las Vegas default, filters, markers and saved preference at " + width + "px", async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await installMapStub(page);
+    await page.goto("/#map");
+    await expect(page.getByLabel("Choose city")).toHaveValue("Las Vegas");
+    await expect(page.locator(".card")).toHaveCount(7);
+    await expect(page.locator(".map-canvas button")).toHaveCount(7);
+    await expect(page.locator(".demo-badge")).toHaveCount(7);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await page.locator(".map-canvas button").filter({ hasText: "$1" }).first().click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toContainText("Cinder Circuit");
+    await expect(dialog).toContainText("Cannot be redeemed");
+    await expect(dialog.getByRole("link", { name: /directions/i })).toHaveCount(0);
+    await page.getByLabel("Close venue details").click();
+    await page.getByRole("button", { name: "Beer", exact: true }).click();
+    await expect(page.locator(".map-canvas button")).toHaveCount(2);
+    await page.getByLabel("Search spots").fill("Overtime");
+    await expect(page.locator(".card")).toHaveCount(1);
+    await expect(page.locator(".map-canvas button")).toHaveCount(1);
+    await page.getByLabel("Save Overtime Mirage", { exact: true }).click();
+    await page.getByRole("link", { name: "Saved", exact: true }).click();
+    await expect(page.locator(".card")).toContainText("Overtime Mirage");
+    await page.reload();
+    await expect(page.getByLabel("Choose city")).toHaveValue("Las Vegas");
+    await expect(page.locator(".card")).toHaveCount(1);
+    await page.getByRole("link", { name: "Map", exact: true }).click();
+    await page.getByRole("button", { name: "All spots", exact: true }).click();
+    await page.getByLabel("Search spots").fill("");
+    for (const [city, count] of [["Atlantic City", 4], ["New York City", 2], ["Las Vegas", 7]] as const) {
+      await page.getByLabel("Choose city").selectOption(city);
+      await expect(page.locator(".card")).toHaveCount(count);
+      await expect(page.locator(".map-canvas button")).toHaveCount(count);
+    }
+    await page.getByLabel("Choose city").selectOption("New York City");
+    await page.reload();
+    await expect(page.getByLabel("Choose city")).toHaveValue("New York City");
+    await expect(page.locator(".card")).toHaveCount(2);
+  });
+}
+
+test("Las Vegas no-key fallback keeps all fictional previews accessible", async ({ page }) => {
+  await page.goto("/#map");
+  await expect(page.getByLabel("Choose city")).toHaveValue("Las Vegas");
+  await expect(page.getByText(/no Google Maps key is configured/)).toBeVisible();
+  await expect(page.locator(".card")).toHaveCount(7);
+  await page.getByRole("button", { name: "Saffron Static Lounge", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("No offer can be purchased or redeemed");
+});
