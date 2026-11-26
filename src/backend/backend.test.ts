@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { createClient } from '@supabase/supabase-js';
 import { readBackendConfig } from './config';
 import { authStorage, sessionKey } from './client';
 import { publicCatalog } from './catalog';
@@ -31,6 +32,15 @@ describe('session storage', () => {
     expect(await authStorage(true).getItem(sessionKey)).toBeNull();
     expect(localStorage.getItem(sessionKey)).toBeNull(); expect(sessionStorage.getItem(sessionKey)).toBeNull();
     await storage.removeItem(sessionKey); expect(await storage.getItem(sessionKey)).toBeNull();
+  });
+  it('removes an expired restored session when refresh is rejected', async () => {
+    const storage = authStorage(true);
+    const key = 'synthetic-expired-session';
+    await storage.setItem(key, JSON.stringify({ access_token: 'synthetic-expired', refresh_token: 'synthetic-revoked', expires_at: 1, expires_in: 1, token_type: 'bearer', user: { id: 'synthetic' } }));
+    const request = vi.fn(async () => new Response(JSON.stringify({ error_code: 'refresh_token_not_found', msg: 'Invalid Refresh Token' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+    const client = createClient('http://127.0.0.1:55321', 'sb_publishable_synthetic', { auth: { storage, storageKey: key, autoRefreshToken: false, detectSessionInUrl: false }, global: { fetch: request } });
+    const result = await client.auth.getSession();
+    expect(result.data.session).toBeNull(); expect(await storage.getItem(key)).toBeNull(); expect(request).toHaveBeenCalled();
   });
 });
 describe('public data adapter', () => {

@@ -174,3 +174,18 @@ test("Vegas remains usable without Maps and with unavailable preference storage"
   expect(screen.getByText("The Velvet Room")).toBeVisible();
   vi.restoreAllMocks();
 });
+test('backend Saved identities survive an initially empty feed and refresh', () => {
+  localStorage.setItem('dusk-market', 'las-vegas');
+  localStorage.setItem('dusk-saved-venues', '["synthetic-async"]');
+  const venue = { id: 'synthetic-async', name: 'Synthetic async venue', isDemo: false,
+    status: 'published', city: 'Las Vegas', neighborhood: 'Synthetic', category: 'bar',
+    timeZone: 'America/Los_Angeles', address: 'Synthetic verified address' };
+  const view = render(<App publicCatalog={[]} />);
+  fireEvent.click(screen.getByRole('link', { name: 'Saved' }));
+  view.rerender(<App publicCatalog={[venue]} />);
+  expect(screen.getByRole('button', { name: venue.name })).toBeInTheDocument();
+  view.rerender(<App publicCatalog={[]} />);
+  view.rerender(<App publicCatalog={[venue]} />);
+  expect(screen.getByRole('button', { name: venue.name })).toBeInTheDocument();
+  expect(localStorage.getItem('dusk-saved-venues')).toBe('["synthetic-async"]');
+});

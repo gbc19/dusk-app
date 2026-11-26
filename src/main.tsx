@@ -61,13 +61,20 @@ export function App({ publicCatalog }: { publicCatalog?: unknown } = {}) {
   }),
     [category, setCategory] = useState<Category>("All spots"),
     [query, setQuery] = useState(""),
-    [storedSaved, setSaved] = useState<SavedId[]>(() => knownSavedIds(readSaved(savedKey), listings)),
+    [storedSaved, setSaved] = useState<SavedId[]>(() => {
+      const raw = readSaved(savedKey);
+      // Backend feeds start empty and refresh asynchronously. Do not discard saved identities while loading.
+      return realMode && Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string') : knownSavedIds(raw, listings);
+    }),
     [mapSavedOnly, setMapSavedOnly] = useState(false),
     [selectedId, setSelectedId] = useState<SavedId | null>(null),
     [mapOpened, setMapOpened] = useState(screen === "map");
   const savedOnly = screen === "saved" || (screen === "map" && mapSavedOnly);
   const saved = useMemo(() => knownSavedIds(storedSaved, listings), [storedSaved, listings]);
   const selected = listings.find(({ id }) => id === selectedId);
+  useEffect(() => {
+    if (selectedId !== null && !listings.some(({ id }) => id === selectedId)) setSelectedId(null);
+  }, [listings, selectedId]);
   function setSelected(listing: Listing | null) {
     setSelectedId(listing?.id ?? null);
   }

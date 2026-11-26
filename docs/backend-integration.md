@@ -76,6 +76,8 @@ Proceed only when exactly the intended emulator is listed as `device`. If `unaut
 & $adb -s emulator-5554 reverse tcp:55321 tcp:55321
 & $adb -s emulator-5554 reverse --list
 npm run native:sync:android:local
+$env:JAVA_HOME = Join-Path $env:USERPROFILE '.jdks\jbr-21.0.11'
+$env:ANDROID_HOME = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
 Push-Location android
 .\gradlew.bat installDebug
 Pop-Location
@@ -92,6 +94,8 @@ npm run backend:stop
 ```
 
 Default sync uses the prior HTTPS WebView origin. Native local mode's HTTP origin has separate local storage; existing demo Saved data remains in its prior origin. This origin separation is specific to emulator testing and is not a Saved migration.
+
+The JDK path above is the existing JDK 21 found on this founder machine. Verify it exists before using it elsewhere. Android Studio's bundled JDK 25 is incompatible with the current Gradle 8.14.3; do not change the Gradle version or global Java configuration to work around that. These environment assignments affect only the current PowerShell process.
 
 ## Manual acceptance
 
@@ -120,3 +124,11 @@ npm run backend:test:network
 ```
 
 Backend tests target the fixed local stack and use synthetic identities. Customer tests use real public Auth signup, local test-mail codes, ordinary sessions, restoration/refresh/logout/recovery, and public/private access checks. Only cleanup uses administrative credentials in memory. They never reset a database. Test accounts are removed and application identity records deactivated; pseudonymous history can remain until an explicitly authorized disposable reset. Security tests and CI do not prove external network isolation. Do not change firewall rules for connectivity troubleshooting.
+
+## Verification boundaries for this implementation
+
+The Windows application/component and Chromium suites ran locally. Initial high-concurrency runs hit worker/test timeouts; reduced-concurrency reruns passed. The Windows firewall guard mocks passed. Actual database rebuild, all 78 database assertions, the existing seven Auth/API scenarios plus parent, and six customer Auth scenarios plus parent passed against a disposable Supabase stack in GitHub Actions. Web/native builds and public asset scans also ran in CI.
+
+The local Windows Docker engine/experimental stack owner timed out, so these real Auth/database suites could not be repeated in this Windows session. The founder's retained database was never reset. The Pixel 8 reported unauthorized through host ADB, so no reverse mapping, native backend request, or live native authentication was verified. Native lifecycle behavior and Maps still require the manual emulator checklist. Do not treat browser mocks or CI Auth tests as proof of Android connectivity or external firewall isolation.
+
+Both the normal demo and explicit local-test Android debug APKs compiled successfully using the existing JDK 21. The local-test APK used a synthetic build-only public key and was not installed. A release task dry run correctly rejected the local-test assets. The normal native asset scan passed with no local backend endpoint. These are build checks, not native network or device checks.
