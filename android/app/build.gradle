@@ -1,5 +1,19 @@
 apply plugin: 'com.android.application'
 
+// Debug emulator bundles must never enter an APK/AAB release task, including Android Studio.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('release') }) {
+        def copiedConfig = file('src/main/assets/capacitor.config.json')
+        def copiedWeb = file('src/main/assets/public')
+        if ((copiedConfig.exists() && copiedConfig.text.contains('"http"')) ||
+            (copiedWeb.exists() && fileTree(copiedWeb).matching { include '**/*.js' }.any {
+                it.text.contains('DUSK_LOCAL_BACKEND_BUILD') || it.text.contains('127.0.0.1:55321')
+            })) {
+            throw new GradleException('Local backend assets cannot be released. Run npm run native:sync:android first.')
+        }
+    }
+}
+
 def duskMapsKey = providers.gradleProperty('DUSK_ANDROID_MAPS_API_KEY')
     .orElse(providers.environmentVariable('DUSK_ANDROID_MAPS_API_KEY'))
     .getOrElse('').trim()

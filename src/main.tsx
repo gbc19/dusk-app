@@ -34,6 +34,8 @@ import { VenueImage } from "./components/VenueImage";
 import { useScreen, type Screen } from "./navigation/useScreen";
 import symbolLogo from "./assets/dusk-logo-new.png";
 import "./style.css";
+import { readBackendConfig } from './backend/config';
+const BackendGate = import.meta.env.MODE === 'native' ? null : React.lazy(() => import('./backend/BackendGate').then(module => ({ default: module.BackendGate })));
 function readSaved(key: string): unknown {
   try {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -569,10 +571,20 @@ export function App({ publicCatalog }: { publicCatalog?: unknown } = {}) {
     </>
   );
 }
+export function Application() {
+  if (!BackendGate) return <App />;
+  const native = Capacitor.isNativePlatform();
+  try {
+    const config = readBackendConfig(import.meta.env, native, import.meta.env.MODE === 'native-local');
+    return config.mode === 'demo' ? <App /> : <React.Suspense fallback={<p role="status">Loading local backend…</p>}><BackendGate config={config} native={native}>{catalog => <App publicCatalog={catalog} />}</BackendGate></React.Suspense>;
+  } catch {
+    return <main className="backend-status"><h1>Backend configuration unavailable</h1><p>No listings or credentials were loaded. Correct the local configuration and restart the build.</p></main>;
+  }
+}
 const root = document.getElementById("root");
 if (root)
   createRoot(root).render(
     <React.StrictMode>
-      <App />
+      <Application />
     </React.StrictMode>,
   );

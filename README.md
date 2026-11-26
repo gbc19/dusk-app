@@ -67,9 +67,11 @@ On phones, categories use one horizontally scrollable row. The Map screen keeps 
 
 Phase 6B.3 adds an independent local database and security foundation. See [Local backend setup, security boundaries, and tests](docs/local-backend.md). The application continues using its bundled demo catalog.
 
+Phase 6B.4 adds an explicit local backend mode and synthetic customer email-code authentication. See [Local application integration and acceptance checklist](docs/backend-integration.md). Default demo browsing remains independent of Supabase.
+
 [Data model design](docs/data-model.md) documents venue, customer, and staff contracts and future relationships. Offers reference shared venue IDs; numeric saved-deal IDs remain compatible. Customer/staff types are not instantiated or persisted. Promoter profiles, nightlife events, guest lists, and table reservations remain fixed off with no MVP UI, backend, or services.
 
-Saved spots stay in browser local storage with a session-only fallback if storage fails. There is no backend or user account system. Real inventory, verified addresses, approval status, age verification, and redemption require later implementation.
+Saved spots stay in browser local storage with a session-only fallback if storage fails. Backend customer accounts are available only in the explicit local test mode. Real inventory, production verification, age verification, and redemption require later implementation.
 
 ## Verification limits
 

@@ -19,13 +19,17 @@
     "backend:reset": "node scripts/local-backend.mjs reset",
     "backend:test": "node scripts/local-backend.mjs test",
     "backend:test:api": "node --test --test-concurrency=1 scripts/backend-api.test.mjs",
-    "backend:test:network": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/backend-network.test.ps1"
+    "backend:test:network": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/backend-network.test.ps1",
+    "native:sync:android:local": "node scripts/native-local.mjs",
+    "backend:test:customer": "node --test --test-concurrency=1 scripts/customer-auth.test.mjs",
+    "build:check": "node scripts/check-public-build.mjs dist"
   },
   "dependencies": {
     "@capacitor/android": "8.6.2",
     "@capacitor/core": "8.6.2",
     "@capacitor/google-maps": "8.0.1",
     "@capacitor/ios": "8.6.2",
+    "@supabase/supabase-js": "2.119.2",
     "lucide-react": "^0.468.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

@@ -2172,3 +2172,10 @@ footer .logo .brand-wordmark {
     min-inline-size: max-content;
   }
 }
+/* Local backend controls are isolated from existing demo navigation and cards. */
+.backend-status { padding: 1rem; background: #211c29; color: #fff; }
+.backend-status button, .backend-status input, .backend-status select { min-height: 44px; padding: .6rem; margin: .25rem; }
+.backend-account { max-width: 38rem; margin-top: 1rem; }
+.backend-account label { display: block; margin-top: .5rem; }
+.backend-account input { display: block; width: min(90%, 26rem); }
+.backend-actions { display: flex; flex-wrap: wrap; }

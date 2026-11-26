@@ -46,7 +46,7 @@ npm run backend:test:api
 npm run backend:test:network
 ```
 
-The initial start applies migrations and synthetic seeds. Image downloads can take several minutes. Studio is available at `http://127.0.0.1:55323`, the API at `http://127.0.0.1:55321`, and test mail at `http://127.0.0.1:55324`. Public signup and anonymous Auth accounts are disabled. Test users are created administratively inside the local test harness, then sign in using ordinary Auth sessions and real TOTP factors.
+The initial start applies migrations and synthetic seeds. Image downloads can take several minutes. Studio is available at `http://127.0.0.1:55323`, the API at `http://127.0.0.1:55321`, and test mail at `http://127.0.0.1:55324`. Anonymous Auth accounts are disabled. Phase 6B.4 enables local synthetic email signup with confirmation codes; see [application integration](backend-integration.md). Privileged security-test fixtures still use ordinary Auth sessions and real TOTP factors after administrative setup.
 
 To rebuild **this disposable local backend**, replacing its database contents with migrations and synthetic seeds, run:
 

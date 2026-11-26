@@ -17,6 +17,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - run: npm run build:check
+      - run: npm run build:native
+      - run: node scripts/check-public-build.mjs dist --native
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
   backend:
@@ -33,6 +36,7 @@ jobs:
       - run: npm run backend:reset
       - run: npm run backend:test
       - run: npm run backend:test:api
+      - run: npm run backend:test:customer
       - shell: pwsh
         run: ./scripts/backend-network.test.ps1
       - if: always()

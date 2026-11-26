@@ -5,6 +5,8 @@ const config: CapacitorConfig = {
   appId: "com.example.dusk.prototype",
   appName: "DUSK",
   webDir: "dist",
+  // Explicit emulator-only build. Gradle refuses release tasks while this is copied.
+  ...(process.env.DUSK_LOCAL_BACKEND === '1' ? { server: { androidScheme: 'http' } } : {}),
 };
 
 export default config;

@@ -40,7 +40,7 @@ port = 55324
 enabled = true
 site_url = "http://127.0.0.1:5173"
 additional_redirect_urls = []
-enable_signup = false
+enable_signup = true # Local synthetic customer integration only. Never a production release flag.
 enable_anonymous_sign_ins = false
 minimum_password_length = 12
 jwt_expiry = 900
@@ -50,6 +50,14 @@ enable_refresh_token_rotation = true
 enabled = true
 enable_confirmations = true
 secure_password_change = true
+
+[auth.email.template.confirmation]
+subject = "DUSK local test email verification"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "DUSK local test password recovery"
+content_path = "./supabase/templates/recovery.html"
 
 [auth.mfa.totp]
 enroll_enabled = true

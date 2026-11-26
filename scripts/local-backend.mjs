@@ -22,7 +22,10 @@ export function run(command, args, { capture = false, input } = {}) {
   if (result.error) throw result.error;
   if (result.status !== 0) {
     // Status captures may contain local credentials, so never echo captured output.
-    const diagnostic = (result.stderr || '').split('\n').filter((line) => /ERROR:|DETAIL:|\[task\] failed:/.test(line)).join('\n').replace(/eyJ[A-Za-z0-9_.-]+|sb_(?:secret|publishable)_[A-Za-z0-9_-]+/g, '[redacted]').slice(-1200);
+    const structured = (result.stdout || '').split('\n').flatMap(line => {
+      try { const event = JSON.parse(line); return event._tag === 'Error' && typeof event.error?.message === 'string' ? [event.error.message] : []; } catch { return []; }
+    });
+    const diagnostic = [...structured, ...(result.stderr || '').split('\n').filter((line) => /ERROR:|DETAIL:|\[task\] failed:/.test(line))].join('\n').replace(/eyJ[A-Za-z0-9_.-]+|sb_(?:secret|publishable)_[A-Za-z0-9_-]+|postgres(?:ql)?:\/\/[^\s"']+/g, '[redacted]').slice(-1200);
     throw new Error(`${command.split(/[\\/]/).pop()} failed with exit code ${result.status}. ${diagnostic || 'Check Docker Desktop and the documented local setup.'}`);
   }
   return result.stdout || '';
