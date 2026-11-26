@@ -1,10 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
-import { readBackendConfig } from './config';
+import { readBackendConfig, validatePublicEnvironment } from './config';
 import { authStorage, sessionKey } from './client';
 import { publicCatalog } from './catalog';
 const publicKey = 'sb_publishable_synthetic';
 describe('local configuration boundaries', () => {
+  it('rejects unrecognized public variables and invalid keys even in demo builds', () => {
+    expect(() => validatePublicEnvironment({ VITE_DATABASE_PASSWORD: 'synthetic' }, false)).toThrow('Unrecognized public');
+    expect(() => validatePublicEnvironment({ VITE_SUPABASE_PUBLISHABLE_KEY: 'synthetic-password' }, false)).toThrow();
+    expect(() => validatePublicEnvironment({ VITE_GOOGLE_MAPS_API_KEY: 'synthetic-public-maps-key' }, false)).not.toThrow();
+  });
   it('defaults to demo with no backend credentials', () => expect(readBackendConfig({})).toEqual({ mode: 'demo' }));
   it('accepts an explicit loopback public client', () => expect(readBackendConfig({ VITE_DATA_MODE: 'backend', VITE_SUPABASE_URL: 'http://127.0.0.1:55321', VITE_SUPABASE_PUBLISHABLE_KEY: publicKey }).mode).toBe('backend'));
   it.each(['sb_secret_private', 'invalid', `e30.${btoa(JSON.stringify({ role: 'service_role' }))}.signature`])('rejects nonpublic keys without echoing them', key => {

@@ -1,11 +1,12 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { loadEnv } from 'vite';
-import { readBackendConfig } from './src/backend/config';
+import { readBackendConfig, validatePublicEnvironment } from './src/backend/config';
 export default defineConfig(({ mode }) => {
   const native = mode.startsWith('native');
   const prefix = native ? 'DUSK_NATIVE_PUBLIC_' : 'VITE_';
   const env = loadEnv(mode, process.cwd(), prefix);
+  validatePublicEnvironment(env, native);
   for (const value of Object.values(env)) {
     let privateJwt = false;
     for (const jwt of value.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g) || []) {

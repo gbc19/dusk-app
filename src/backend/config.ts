@@ -1,5 +1,14 @@
 export type BackendConfig = { mode: 'demo' } | { mode: 'backend'; url: string; publicKey: string };
 
+/** Prevent accidentally embedding arbitrary public-prefixed secrets via import.meta.env. */
+export function validatePublicEnvironment(env: Record<string, string>, native: boolean) {
+  const prefix = native ? 'DUSK_NATIVE_PUBLIC_' : 'VITE_';
+  const allowed = ['DATA_MODE', 'SUPABASE_URL', 'SUPABASE_PUBLISHABLE_KEY', ...(native ? [] : ['GOOGLE_MAPS_API_KEY'])].map(key => prefix + key);
+  if (Object.keys(env).some(key => key.startsWith(prefix) && !allowed.includes(key))) throw new Error('Unrecognized public build configuration. Review local variable names without exposing values.');
+  // Validate supplied backend values even in a demo build, where the whole env object may be inlined.
+  if (env[prefix + 'SUPABASE_URL'] || env[prefix + 'SUPABASE_PUBLISHABLE_KEY']) readBackendConfig({ ...env, [prefix + 'DATA_MODE']: 'backend' }, native, true);
+}
+
 /** This milestone deliberately permits only the isolated local backend. Never log input. */
 export function readBackendConfig(env: Record<string, unknown>, native = false, localNative = false): BackendConfig {
   const prefix = native ? 'DUSK_NATIVE_PUBLIC_' : 'VITE_';
